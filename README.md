@@ -38,7 +38,7 @@ Compilation
 
 You have to run all following commands on Linux. Windows is not supported.
 
-To compile hid-gadget-test, install Android NDK, and launch commands
+To compile hid-gadget-test, install Android NDK from site http://developer.android.com/ and launch commands
 
 	cd hid-gadget-test
 	ndk-build
