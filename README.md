@@ -71,4 +71,4 @@ To compile boot.img, launch commands
 	cp -f ../tegra/arch/arm/boot/zImage device/asus/grouper/kernel
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
-You then can find boot.img in directory aosp/out/target/product/grouper
+You then can find boot.img in directory `aosp/out/target/product/grouper`.
