@@ -1,0 +1,12 @@
+diff --git a/system/core/rootdir/ueventd.rc b/system/core/rootdir/ueventd.rc
+index 2cf0265..bd81362 100644
+--- a/system/core/rootdir/ueventd.rc
++++ b/system/core/rootdir/ueventd.rc
+@@ -30,6 +30,7 @@
+ /dev/uhid                 0660   system     net_bt_stack
+ /dev/uinput               0660   system     net_bt_stack
+ /dev/alarm                0664   system     radio
++/dev/hidg*                0777   system     system
+ /dev/tty0                 0660   root       system
+ /dev/graphics/*           0660   root       graphics
+ /dev/msm_hw3dm            0660   system     graphics

@@ -99,7 +99,7 @@ index 4de9562..b738cb2 100644
  	mutex_unlock(&dev->mutex);
  
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
-index 83a266b..2ca816a 100644
+index 83a266b..e66bb94 100644
 --- a/drivers/usb/gadget/f_hid.c
 +++ b/drivers/usb/gadget/f_hid.c
 @@ -28,6 +28,7 @@
@@ -110,7 +110,7 @@ index 83a266b..2ca816a 100644
  
  static int major, minors;
  static struct class *hidg_class;
-@@ -457,12 +458,13 @@ const struct file_operations f_hidg_fops = {
+@@ -457,7 +458,7 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };
  
@@ -119,13 +119,7 @@ index 83a266b..2ca816a 100644
  {
  	struct usb_ep		*ep;
  	struct f_hidg		*hidg = func_to_hidg(f);
- 	int			status;
- 	dev_t			dev;
-+	char buf[32];
- 
- 	/* allocate instance-specific interface IDs, and patch descriptors */
- 	status = usb_interface_id(c, f);
-@@ -553,7 +555,9 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+@@ -553,7 +554,9 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
  
  	/* disable/free request and end point */
  	usb_ep_disable(hidg->in_ep);
@@ -136,7 +130,7 @@ index 83a266b..2ca816a 100644
  	kfree(hidg->req->buf);
  	usb_ep_free_request(hidg->in_ep, hidg->req);
  
-@@ -589,7 +593,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
+@@ -589,7 +592,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
  /*-------------------------------------------------------------------------*/
  /*                             usb_configuration                           */
  
@@ -145,7 +139,7 @@ index 83a266b..2ca816a 100644
  			    struct hidg_func_descriptor *fdesc, int index)
  {
  	struct f_hidg *hidg;
-@@ -640,7 +644,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
+@@ -640,7 +643,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
  	return status;
  }
  
