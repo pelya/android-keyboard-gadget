@@ -24,11 +24,13 @@ You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 - Find the *adb* too inside Android SDK.
 - Launch commands
 
+
 	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
 	adb shell
 	cd /data/local/tmp
 	./hid-gadget-test /dev/hidg0 keyboard
 	./hid-gadget-test /dev/hidg1 mouse
+
 
 - Enter symbols and commands - they will be sent back to your PC as keypresses.
 - For mouse movement, enter two numbers separated by space, they should be between -127 and 127.
