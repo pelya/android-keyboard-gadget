@@ -7,17 +7,31 @@ Convert your Android device into USB keyboard/mouse, control your PC from your A
 Installation
 ============
 
-You will need Nexus 7 2012 WiFi, with Android 4.4.2 installed.
+You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 
 - Plug your device into PC using USB cable.
 - Power off the device.
 - Hold Volume Down button and Power button for 5 seconds, to enter fastboot mode.
-- Copy appropriate fastboot executable from the directory fastboot.
+- Copy appropriate fastboot executable from the directory `fastboot`.
 - Launch command `fastboot oem unlock`
 - Confirm unlock action by pressing Power button. This will factory reset your device.
-- Copy boot.img from directory nexus7-2012-wifi-grouper
+- Copy boot.img from directory `nexus7-2012-wifi-grouper`.
 - Launch command `fastboot flash boot boot.img`
 - Reboot your device using Power button.
+- Go to *Settings* -> *About tablet*, and tap *Build number* 10 times.
+- Go to *Settings* -> *Developer options*, and enable *USB debugging*.
+- Install Android SDK from site http://developer.android.com/
+- Find the *adb* too inside Android SDK.
+- Launch commands
+
+	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
+	adb shell
+	cd /data/local/tmp
+	./hid-gadget-test /dev/hidg0 keyboard
+	./hid-gadget-test /dev/hidg1 mouse
+
+- Enter symbols and commands - they will be sent back to your PC as keypresses.
+- For mouse movement, enter two numbers separated by space, they should be between -127 and 127.
 
 Compilation
 ===========
@@ -57,14 +71,3 @@ To compile boot.img, launch commands
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
 You then can find boot.img in directory aosp/out/target/product/grouper
-
-To test keyboard and mouse input, flash boot.img to your device as described above, and launch commands
-
-	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
-	adb shell
-	cd /data/local/tmp
-	./hid-gadget-test /dev/hidg0 keyboard
-	./hid-gadget-test /dev/hidg1 mouse
-
-Enter symbols and commands - they will be sent back to your PC as keypresses.
-For mouse movement, enter two numbers separated by space, they should not be between -127 and 127.
