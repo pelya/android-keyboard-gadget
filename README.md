@@ -15,8 +15,8 @@ You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 - Copy appropriate fastboot executable from the directory `fastboot`.
 - Launch command `fastboot oem unlock`
 - Confirm unlock action by pressing Power button. This will factory reset your device.
-- Copy boot.img from directory `nexus7-2012-wifi-grouper`.
-- Launch command `fastboot flash boot boot.img`
+- Copy *boot.img* from directory `nexus7-2012-wifi-grouper`.
+- Launch command `fastboot flash boot boot.img`.
 - Reboot your device using Power button.
 - Go to *Settings* -> *About tablet*, and tap *Build number* 10 times.
 - Go to *Settings* -> *Developer options*, and enable *USB debugging*.
@@ -58,7 +58,7 @@ To compile kernel, launch commands
 	make tegra3_android_defconfig
 	make -j4
 
-To compile boot.img, launch commands
+To compile *boot.img*, launch commands
 
 	mkdir ~/bin
 	export PATH=~/bin:$PATH
@@ -71,4 +71,4 @@ To compile boot.img, launch commands
 	cp -f ../tegra/arch/arm/boot/zImage device/asus/grouper/kernel
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
-You then can find boot.img in directory `aosp/out/target/product/grouper`.
+You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
