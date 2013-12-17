@@ -21,7 +21,7 @@ You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 - Go to *Settings* -> *About tablet*, and tap *Build number* 10 times.
 - Go to *Settings* -> *Developer options*, and enable *USB debugging*.
 - Install Android SDK from site http://developer.android.com/
-- Find the *adb* too inside Android SDK.
+- Find the *adb* tool inside Android SDK.
 
 Launch commands
 
