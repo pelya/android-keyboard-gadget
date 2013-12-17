@@ -12,7 +12,7 @@ index 581a5ae..6be0aa5 100644
  obj-$(CONFIG_USB_ZERO)		+= g_zero.o
  obj-$(CONFIG_USB_AUDIO)		+= g_audio.o
 diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
-index 4de9562..4bd3444 100644
+index 4de9562..b738cb2 100644
 --- a/drivers/usb/gadget/android.c
 +++ b/drivers/usb/gadget/android.c
 @@ -52,6 +52,9 @@
@@ -76,8 +76,30 @@ index 4de9562..4bd3444 100644
  	NULL
  };
  
+@@ -957,6 +997,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 	char *name;
+ 	char buf[256], *b;
+ 	int err;
++	int hid_enabled;
+ 
+ 	mutex_lock(&dev->mutex);
+ 
+@@ -976,8 +1017,13 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 			err = android_enable_function(dev, name);
+ 			if (err)
+ 				pr_err("android_usb: Cannot enable '%s'", name);
++			if (!strcmp(name, "hid"))
++				hid_enabled = 1;
+ 		}
+ 	}
++	/* HID driver always enabled, it's the whole point of this kernel patch */
++	if (hid_enabled)
++		android_enable_function(dev, "hid");
+ 
+ 	mutex_unlock(&dev->mutex);
+ 
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
-index 83a266b..4b17ec7 100644
+index 83a266b..2ca816a 100644
 --- a/drivers/usb/gadget/f_hid.c
 +++ b/drivers/usb/gadget/f_hid.c
 @@ -28,6 +28,7 @@
@@ -88,7 +110,7 @@ index 83a266b..4b17ec7 100644
  
  static int major, minors;
  static struct class *hidg_class;
-@@ -457,7 +458,7 @@ const struct file_operations f_hidg_fops = {
+@@ -457,12 +458,13 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };
  
@@ -97,22 +119,23 @@ index 83a266b..4b17ec7 100644
  {
  	struct usb_ep		*ep;
  	struct f_hidg		*hidg = func_to_hidg(f);
-@@ -553,9 +554,12 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+ 	int			status;
+ 	dev_t			dev;
++	char buf[32];
+ 
+ 	/* allocate instance-specific interface IDs, and patch descriptors */
+ 	status = usb_interface_id(c, f);
+@@ -553,7 +555,9 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
  
  	/* disable/free request and end point */
  	usb_ep_disable(hidg->in_ep);
 -	usb_ep_dequeue(hidg->in_ep, hidg->req);
--	kfree(hidg->req->buf);
--	usb_ep_free_request(hidg->in_ep, hidg->req);
-+	if (hidg->req) {
-+		usb_ep_dequeue(hidg->in_ep, hidg->req);
-+		if (hidg->req->buf)
-+			kfree(hidg->req->buf);
-+		usb_ep_free_request(hidg->in_ep, hidg->req);
-+	}
++
++	/* TODO: memleak here? */
++	/* usb_ep_dequeue(hidg->in_ep, hidg->req); */
+ 	kfree(hidg->req->buf);
+ 	usb_ep_free_request(hidg->in_ep, hidg->req);
  
- 	/* free descriptors copies */
- 	usb_free_descriptors(f->hs_descriptors);
 @@ -589,7 +593,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
  /*-------------------------------------------------------------------------*/
  /*                             usb_configuration                           */
