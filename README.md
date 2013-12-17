@@ -13,16 +13,10 @@ You will need Nexus 7 2012 WiFi, with Android 4.4.2 installed.
 - Power off the device.
 - Hold Volume Down button and Power button for 5 seconds, to enter fastboot mode.
 - Copy appropriate fastboot executable from the directory fastboot.
-- Launch command
-
-	fastboot oem unlock
-
+- Launch command `fastboot oem unlock`
 - Confirm unlock action by pressing Power button. This will factory reset your device.
-- Copy boot.img from directory nexus7-2012-wifi-grouper.
-- Launch command
-
-	fastboot flash boot boot.img
-
+- Copy boot.img from directory nexus7-2012-wifi-grouper
+- Launch command `fastboot flash boot boot.img`
 - Reboot your device using Power button.
 
 Compilation
