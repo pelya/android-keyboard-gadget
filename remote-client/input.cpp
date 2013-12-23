@@ -44,7 +44,7 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel)
 	event[0] |= b3 ? 4 : 0;
 	event[1] = x;
 	event[2] = y;
-	event[3] = wheel;
+	event[3] = wheel >= 0 ? wheel : 256 + wheel;
 	write(mouseFd, event, sizeof(event));
 }
 
@@ -62,8 +62,8 @@ void processInput()
 	{
 		outputSendMouse(mouseCoords[0], mouseCoords[1],
 						mouseButtons[SDL_BUTTON_LEFT], mouseButtons[SDL_BUTTON_RIGHT], mouseButtons[SDL_BUTTON_MIDDLE],
-						mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] ? -1 :
-						mouseButtons[SDL_BUTTON_WHEELDOWN] != mouseButtons[SDL_BUTTON_WHEELDOWN] ? 1 : 0);
+						(mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] && mouseButtons[SDL_BUTTON_WHEELUP]) ? -1 :
+						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? 1 : 0);
 	}
 	memcpy(oldkeys, keys, sizeof(keys));
 	mouseCoords[0] = 0;

@@ -41,7 +41,7 @@ void showErrorMessage(const char *msg)
 
 void initSDL()
 {
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
 	if( SDL_ListModes(NULL, 0)[0]->w > SDL_ListModes(NULL, 0)[0]->h )
 		SDL_SetVideoMode(VID_X, VID_Y, 0, SDL_SWSURFACE);
@@ -54,6 +54,7 @@ void initSDL()
 		printf("Error: cannot open font file, please reinstall the app");
 		exit(1);
 	}
+	SDL_JoystickOpen(0);
 }
 
 void deinitSDL()

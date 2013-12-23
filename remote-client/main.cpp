@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 			{
 				if(evt.jbutton.which == 0) // Multitouch and on-screen joystick
 					touchPointers[evt.jbutton.button].pressed = (evt.jbutton.state == SDL_PRESSED);
+				//printf("Touch press %d: %d", evt.jbutton.button, evt.jbutton.state);
 			}
 			if( evt.type == SDL_JOYBALLMOTION )
 			{
@@ -64,6 +65,7 @@ int main(int argc, char* argv[])
 				{
 					touchPointers[evt.jball.ball].x = evt.jball.xrel;
 					touchPointers[evt.jball.ball].y = evt.jball.yrel;
+					//printf("Touch %d: %d %d", evt.jball.ball, evt.jball.xrel, evt.jball.yrel);
 				}
 			}
 		}
@@ -72,6 +74,7 @@ int main(int argc, char* argv[])
 		processInput();
 
 		SDL_Flip(SDL_GetVideoSurface());
+		SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
 
 		if( noEvents )
 			SDL_Delay(100);

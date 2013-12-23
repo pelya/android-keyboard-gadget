@@ -17,7 +17,7 @@ void GuiElement_t::defaultInputCallback(GuiElement_t * elem, bool pressed, int x
 void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
 	SDL_Rect r;
-	Uint32 color = SDL_MapRGB(SDL_GetVideoSurface()->format, pressed ? 192 : 128, pressed ? 192 : 128, pressed ? 192 : 128);
+	Uint32 color = SDL_MapRGB(SDL_GetVideoSurface()->format, elem->toggled ? 192 : 128, elem->toggled ? 192 : 128, elem->toggled ? 192 : 128);
 	SDL_FillRect(SDL_GetVideoSurface(), &elem->rect, color);
 	color = SDL_MapRGB(SDL_GetVideoSurface()->format, 255, 255, 255);
 	r = elem->rect;
@@ -28,13 +28,12 @@ void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x,
 	r = elem->rect;
 	r.h = 1;
 	SDL_FillRect(SDL_GetVideoSurface(), &r, color);
-	r.y = elem->rect.y + elem->rect.y - 1;
+	r.y = elem->rect.y + elem->rect.h - 1;
 	SDL_FillRect(SDL_GetVideoSurface(), &r, color);
-	renderStringColor(elem->text.c_str(), elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2, pressed ? 0 : 255, pressed ? 0 : 255, pressed ? 0 : 255);
+	renderStringColor(elem->text.c_str(), elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255);
 }
 
-template<SDLKey key>
-static void keyInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
+static bool toggleElement(GuiElement_t * elem, bool pressed)
 {
 	if( !pressed )
 		elem->locked = false;
@@ -42,7 +41,16 @@ static void keyInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 	{
 		elem->toggled = !elem->toggled;
 		elem->locked = true;
+		return true;
 	}
+	return false;
+}
+
+template<SDLKey key>
+static void keyInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	toggleElement(elem, pressed);
+
 	keys[key] = elem->toggled || SDL_GetKeyState(NULL)[key];
 }
 
@@ -65,27 +73,22 @@ static void mouseMovementCallback(GuiElement_t * elem, bool pressed, int x, int 
 
 static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
-	if( !pressed )
-		elem->locked = false;
-	if( pressed && !elem->locked )
+	if( toggleElement(elem, pressed) )
 	{
-		elem->toggled = !elem->toggled;
-		elem->locked = true;
-		if( elem->toggled )
-			SDL_ShowScreenKeyboard(NULL);
-		else
-			SDL_HideScreenKeyboard(NULL);
+		//printf( "Show screen keyboard: %d", elem->toggled);
+		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
 	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 void createGui()
 {
-	gui.push_back(GuiElement_t("Left", VID_X * 0.7, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_LEFT>));
-	gui.push_back(GuiElement_t("Right", VID_X * 0.9, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_RIGHT>));
-	gui.push_back(GuiElement_t("Wheel", VID_X * 0.8, VID_Y * 0.1 / 3, VID_X * 0.1, VID_Y * 0.1 / 3, mouseInputCallback<SDL_BUTTON_MIDDLE>));
-	gui.push_back(GuiElement_t("Up", VID_X * 0.8, 0, VID_X * 0.1, VID_Y * 0.1 / 3, mouseInputCallback<SDL_BUTTON_WHEELUP>));
-	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2 / 3, VID_X * 0.1, VID_Y * 0.1 / 3, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
-	gui.push_back(GuiElement_t("Mouse", VID_X * 0.7, VID_Y * 0.1, VID_X * 0.3, VID_Y * 0.3, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Left", VID_X * 0.7, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_LEFT>));
+	gui.push_back(GuiElement_t("Right", VID_X * 0.9, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
+	gui.push_back(GuiElement_t("Wheel", VID_X * 0.8, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
+	gui.push_back(GuiElement_t("Up", VID_X * 0.8, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
+	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
+	gui.push_back(GuiElement_t("Mouse", VID_X * 0.7, VID_Y * 0.3, VID_X * 0.3, VID_Y * 0.7, mouseMovementCallback));
 
 	gui.push_back(GuiElement_t("Keyboard", VID_X * 0.5, 0, VID_X * 0.1, VID_Y * 0.1, keyboardToggleCallback));
 
