@@ -20,13 +20,13 @@ int main(int argc, char* argv[])
 
 	createGui();
 
+	Uint32 lastEvent = SDL_GetTicks();
 	while( true )
 	{
 		SDL_Event evt;
-		bool noEvents = true;
 		while( SDL_PollEvent(&evt) )
 		{
-			noEvents = false;
+			lastEvent = SDL_GetTicks();
 			if(evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN)
 			{
 				if(evt.key.keysym.sym == SDLK_UNDO)
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
 		SDL_Flip(SDL_GetVideoSurface());
 		SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
 
-		if( noEvents )
-			SDL_Delay(100);
+		if( lastEvent + 1000 < SDL_GetTicks() )
+			SDL_Delay(150);
 	}
 
 	deinitSDL();
