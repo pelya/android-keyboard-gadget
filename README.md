@@ -28,6 +28,7 @@ Launch commands
 	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
 	adb shell
 	cd /data/local/tmp
+	chmod 755 hid-gadget-test
 	./hid-gadget-test /dev/hidg0 keyboard
 	./hid-gadget-test /dev/hidg1 mouse
 
