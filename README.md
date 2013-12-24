@@ -15,32 +15,24 @@ You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 - Copy *boot.img* from directory `nexus7-2012-wifi-grouper`.
 - Launch command `fastboot flash boot boot.img`.
 - Reboot your device using Power button.
-- Go to *Settings* -> *About tablet*, and tap *Build number* 10 times.
-- Go to *Settings* -> *Developer options*, and enable *USB debugging*.
-- Install Android SDK from site http://developer.android.com/
-- Find the *adb* tool inside Android SDK.
-
-Launch commands
-
-	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
-	adb shell
-	cd /data/local/tmp
-	chmod 755 hid-gadget-test
-	./hid-gadget-test /dev/hidg0 keyboard
-	./hid-gadget-test /dev/hidg1 mouse
-
-Enter symbols and commands - they will be sent back to your PC as keypresses.
-For mouse movement, enter two numbers separated by space, they should be between -127 and 127.
+- Install and run USB Keyboard app.
 
 Compilation
 ===========
 
 You have to run all following commands on Linux. Windows is not supported.
 
-To compile hid-gadget-test, install Android NDK from site http://developer.android.com/ and launch commands
+To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ ,
+go to http://github.com/ and create an account there, and launch commands
 
-	cd hid-gadget-test
-	ndk-build
+	git clone git@github.com:pelya/commandergenius.git
+	cd commandergenius
+	git submodule update --init --recursive
+	rm -f project/jni/application/src
+	ln -s hid-pc-keyboard project/jni/application/src
+	./changeAppSettings.sh -a
+	android update project -p project
+	./build.sh
 
 To compile kernel, launch commands
 
