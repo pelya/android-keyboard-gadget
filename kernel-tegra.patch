@@ -99,18 +99,97 @@ index 4de9562..b738cb2 100644
  	mutex_unlock(&dev->mutex);
  
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
-index 83a266b..e66bb94 100644
+index 83a266b..dd57753 100644
 --- a/drivers/usb/gadget/f_hid.c
 +++ b/drivers/usb/gadget/f_hid.c
-@@ -28,6 +28,7 @@
+@@ -27,7 +27,9 @@
+ #include <linux/poll.h>
  #include <linux/uaccess.h>
  #include <linux/wait.h>
++#include <linux/delay.h>
  #include <linux/usb/g_hid.h>
 +#include "f_hid.h"
  
  static int major, minors;
  static struct class *hidg_class;
-@@ -457,7 +458,7 @@ const struct file_operations f_hidg_fops = {
+@@ -59,6 +61,8 @@ struct f_hidg {
+ 	struct cdev			cdev;
+ 	struct usb_function		func;
+ 	struct usb_ep			*in_ep;
++	int				usage_count;
++	int				device_unplugged;
+ };
+ 
+ static inline struct f_hidg *func_to_hidg(struct usb_function *f)
+@@ -200,10 +204,17 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 	struct f_hidg *hidg  = file->private_data;
+ 	ssize_t status = -ENOMEM;
+ 
++	/* pr_info("%s: enter\n", __func__); */
++
+ 	if (!access_ok(VERIFY_READ, buffer, count))
+ 		return -EFAULT;
+ 
+ 	mutex_lock(&hidg->lock);
++	if (unlikely(hidg->device_unplugged)) {
++		mutex_unlock(&hidg->lock);
++		return -EIO;
++	}
++	hidg->usage_count++;
+ 
+ #define WRITE_COND (!hidg->write_pending)
+ 
+@@ -218,6 +229,11 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 			return -ERESTARTSYS;
+ 
+ 		mutex_lock(&hidg->lock);
++		if (unlikely(hidg->device_unplugged)) {
++			hidg->usage_count--;
++			mutex_unlock(&hidg->lock);
++			return -EIO;
++		}
+ 	}
+ 
+ 	count  = min_t(unsigned, count, hidg->report_length);
+@@ -226,6 +242,7 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 	if (status != 0) {
+ 		ERROR(hidg->func.config->cdev,
+ 			"copy_from_user error\n");
++		hidg->usage_count--;
+ 		mutex_unlock(&hidg->lock);
+ 		return -EINVAL;
+ 	}
+@@ -247,8 +264,11 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 		status = count;
+ 	}
+ 
++	hidg->usage_count--;
+ 	mutex_unlock(&hidg->lock);
+ 
++	/* pr_info("%s: exit\n", __func__); */
++
+ 	return status;
+ }
+ 
+@@ -257,6 +277,8 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
+ 	struct f_hidg	*hidg  = file->private_data;
+ 	unsigned int	ret = 0;
+ 
++	/* pr_info("%s: enter\n", __func__); */
++
+ 	poll_wait(file, &hidg->read_queue, wait);
+ 	poll_wait(file, &hidg->write_queue, wait);
+ 
+@@ -266,6 +288,8 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
+ 	if (READ_COND)
+ 		ret |= POLLIN | POLLRDNORM;
+ 
++	/* pr_info("%s: exit\n", __func__); */
++
+ 	return ret;
+ }
+ 
+@@ -457,7 +481,7 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };
  
@@ -119,7 +198,25 @@ index 83a266b..e66bb94 100644
  {
  	struct usb_ep		*ep;
  	struct f_hidg		*hidg = func_to_hidg(f);
-@@ -553,7 +554,9 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+@@ -548,12 +572,27 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct f_hidg *hidg = func_to_hidg(f);
+ 
++	pr_info("%s: enter\n", __func__);
++	
++	hidg->device_unplugged = 1;
++	mutex_lock(&hidg->lock);
++	while (hidg->usage_count) {
++		mutex_unlock(&hidg->lock);
++		pr_info("%s: sleep\n", __func__);
++		msleep_interruptible(100);
++		mutex_lock(&hidg->lock);
++	}
++	mutex_unlock(&hidg->lock);
++	pr_info("%s: destroying device\n", __func__);
++
+ 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
+ 	cdev_del(&hidg->cdev);
  
  	/* disable/free request and end point */
  	usb_ep_disable(hidg->in_ep);
@@ -130,7 +227,7 @@ index 83a266b..e66bb94 100644
  	kfree(hidg->req->buf);
  	usb_ep_free_request(hidg->in_ep, hidg->req);
  
-@@ -589,7 +592,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
+@@ -589,7 +628,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
  /*-------------------------------------------------------------------------*/
  /*                             usb_configuration                           */
  
@@ -139,7 +236,7 @@ index 83a266b..e66bb94 100644
  			    struct hidg_func_descriptor *fdesc, int index)
  {
  	struct f_hidg *hidg;
-@@ -640,7 +643,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
+@@ -640,7 +679,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
  	return status;
  }
  
@@ -222,23 +319,22 @@ index 0000000..76180eb
 +};
 diff --git a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
 new file mode 100644
-index 0000000..c1a09ea
+index 0000000..e86cd05
 --- /dev/null
 +++ b/drivers/usb/gadget/f_hid_android_mouse.c
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,39 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
 +
-+/* HID descriptor for a keyboard
-+   Copied from here:
-+   http://www.usblyzer.com/usb-human-interface-device-hid-class-decoder.htm
-+*/
++/* HID descriptor for a keyboard */
 +static struct hidg_func_descriptor ghid_device_android_mouse = {
-+	.subclass		= 0, /* No subclass */
-+	.protocol		= 2, /* Mouse */
-+	.report_length		= 8,
++	.subclass      = 0, /* No subclass */
++	.protocol      = 2, /* Mouse */
++	.report_length = 8,
++
++	/* Copied from: http://www.usblyzer.com/usb-human-interface-device-hid-class-decoder.htm */
 +	.report_desc_length	= 48,
-+	.report_desc		= {
++	.report_desc = {
 +		0x05, 0x01,	/* USAGE_PAGE (Generic Desktop)	          */
 +		0x09, 0x02,	/* USAGE (Mouse)                          */
 +		0xA1, 0x01,	/* COLLECTION (Application)               */
