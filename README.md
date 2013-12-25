@@ -32,7 +32,8 @@ go to http://github.com/ and create an account there, and launch commands
 	ln -s hid-pc-keyboard project/jni/application/src
 	./changeAppSettings.sh -a
 	android update project -p project
-	./build.sh
+
+Add string `<uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>` to file `project/AndroidManifest.xml`, and launch `./build.sh`
 
 To compile kernel, launch commands
 

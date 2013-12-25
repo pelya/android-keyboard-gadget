@@ -11,9 +11,9 @@ void showErrorMessage(const char *msg)
 {
 	SDL_Event event;
 	const char * s;
-	int y = VID_Y/3;
+	int y = VID_Y/4;
 	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
-	for( s = msg; s && s[0]; s = strchr(s, '\n'), s += (s ? 1 : 0), y += 30 )
+	for( s = msg; s && s[0]; s = strchr(s, '\n'), s += (s ? 1 : 0), y += 35 )
 	{
 		const char * s1 = strchr(s, '\n');
 		int len = s1 ? s1 - s : strlen(s);
@@ -48,7 +48,7 @@ void initSDL()
 	else
 		SDL_SetVideoMode(VID_Y, VID_X, 0, SDL_SWSURFACE);
 	TTF_Init();
-	sFont = TTF_OpenFont("DroidSansMono.ttf", 12);
+	sFont = TTF_OpenFont("DroidSansMono.ttf", 14);
 	if (!sFont)
 	{
 		printf("Error: cannot open font file, please reinstall the app");
@@ -67,6 +67,8 @@ void deinitSDL()
 
 void renderStringColor(const char *c, int x, int y, int r, int g, int b, SDL_Surface * surf)
 {
+	if( strcmp(c, "") == 0 )
+		return;
 	SDL_Color fColor = {r, g, b};
 	SDL_Rect fontRect = {0, 0, 0, 0};
 	SDL_Surface* fontSurface = TTF_RenderUTF8_Solid(sFont, c, fColor);

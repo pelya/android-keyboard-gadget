@@ -7,6 +7,7 @@
 #include "gui.h"
 #include "input.h"
 #include "scancodes.h"
+#include "flash-kernel.h"
 
 bool keys[SDLK_LAST];
 //bool oldkeys[SDLK_LAST];
@@ -31,11 +32,12 @@ void openInput()
 	openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
 	{
-		showErrorMessage("Cannot initialize keyboard/mouse device\n"
-						 "To use this app, you have to install custom kernel\n"
-						 "with HID keyboard/mouse gadget driver.\n"
-						 "To install it, visit webpage\n"
-						 "https://github.com/pelya/android-keyboard-gadget");
+		if( !flashCustomKernel() )
+			showErrorMessage("Cannot initialize keyboard/mouse device\n"
+							 "To use this app, you have to install custom kernel\n"
+							 "with HID keyboard/mouse gadget driver.\n"
+							 "To install it, visit webpage\n"
+							 "https://github.com/pelya/android-keyboard-gadget");
 	}
 	for( int k = SDLK_FIRST; k < SDLK_LAST; k++ )
 	{
@@ -79,7 +81,7 @@ static void outputSendKeys()
 				break;
 		}
 	}
-	printf("Send key event: %d %d %d %d %d %d %d %d", event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7]);
+	//printf("Send key event: %d %d %d %d %d %d %d %d", event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7]);
 	if( write(keyboardFd, event, sizeof(event)) != sizeof(event))
 	{
 		close(keyboardFd);
@@ -120,7 +122,7 @@ void processKeyInput(SDLKey key, int pressed)
 		//printf("processKeyInput: duplicate event %d %d", key, pressed);
 		return;
 	}
-	printf("processKeyInput: %d %d", key, pressed);
+	//printf("processKeyInput: %d %d", key, pressed);
 	keys[key] = pressed;
 	outputSendKeys();
 	//oldkeys[key] = keys[key];

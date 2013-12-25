@@ -43,7 +43,15 @@ struct GuiElement_t
 
 extern std::vector<GuiElement_t> gui;
 
-void createGui();
+void createGuiMain();
 void processGui();
+void mainLoop();
+
+void createDialog();
+bool getDialogResult(int * result);
+void addDialogText(const char *text);
+void clearDialogText();
+void addDialogUrlButton(const char *url);
+void addDialogYesNoButtons();
 
 #endif
