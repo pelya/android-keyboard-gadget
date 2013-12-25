@@ -79,7 +79,7 @@ static void outputSendKeys()
 				break;
 		}
 	}
-	//printf("Send key event: %d %d %d %d %d %d %d %d", event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7]);
+	printf("Send key event: %d %d %d %d %d %d %d %d", event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7]);
 	if( write(keyboardFd, event, sizeof(event)) != sizeof(event))
 	{
 		close(keyboardFd);
@@ -120,7 +120,7 @@ void processKeyInput(SDLKey key, int pressed)
 		//printf("processKeyInput: duplicate event %d %d", key, pressed);
 		return;
 	}
-	//printf("processKeyInput: %d %d", key, pressed);
+	printf("processKeyInput: %d %d", key, pressed);
 	keys[key] = pressed;
 	outputSendKeys();
 	//oldkeys[key] = keys[key];
@@ -133,8 +133,8 @@ void processMouseInput()
 	{
 		outputSendMouse(mouseCoords[0], mouseCoords[1],
 						mouseButtons[SDL_BUTTON_LEFT], mouseButtons[SDL_BUTTON_RIGHT], mouseButtons[SDL_BUTTON_MIDDLE],
-						(mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] && mouseButtons[SDL_BUTTON_WHEELUP]) ? -1 :
-						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? 1 : 0);
+						(mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] && mouseButtons[SDL_BUTTON_WHEELUP]) ? 1 :
+						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? -1 : 0);
 	}
 	mouseCoords[0] = 0;
 	mouseCoords[1] = 0;

@@ -87,17 +87,13 @@ void createGui()
 	gui.push_back(GuiElement_t("Wheel", VID_X * 0.8, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
 	gui.push_back(GuiElement_t("Up", VID_X * 0.8, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
-	gui.push_back(GuiElement_t("Mouse", VID_X * 0.7, VID_Y * 0.3, VID_X * 0.3, VID_Y * 0.7, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Mouse", VID_X * 0.5, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
 
 	gui.push_back(GuiElement_t("Keyboard", VID_X * 0.5, 0, VID_X * 0.15, VID_Y * 0.1, keyboardToggleCallback));
-	gui.push_back(GuiElement_t("LCtrl", VID_X * 0.500, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
-	gui.push_back(GuiElement_t("RCtrl", VID_X * 0.575, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_RCTRL>));
-	gui.push_back(GuiElement_t("LShift", VID_X * 0.500, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
-	gui.push_back(GuiElement_t("RShift", VID_X * 0.575, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_RSHIFT>));
-	gui.push_back(GuiElement_t("LAlt", VID_X * 0.500, VID_Y * 0.3, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
-	gui.push_back(GuiElement_t("RAlt", VID_X * 0.575, VID_Y * 0.3, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_RALT>));
-	gui.push_back(GuiElement_t("LMeta", VID_X * 0.500, VID_Y * 0.4, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LMETA>));
-	gui.push_back(GuiElement_t("RMeta", VID_X * 0.575, VID_Y * 0.4, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_RMETA>));
+	gui.push_back(GuiElement_t("Ctrl", VID_X * 0.500, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
+	gui.push_back(GuiElement_t("Alt", VID_X * 0.575, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
+	gui.push_back(GuiElement_t("Shift", VID_X * 0.500, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
+	gui.push_back(GuiElement_t("Meta", VID_X * 0.575, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
 
 	//SDL_ShowScreenKeyboard(NULL);
 }

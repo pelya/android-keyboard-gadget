@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 				if(evt.key.keysym.sym == SDLK_UNDO)
 					return 0;
 				processKeyInput(evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
+				printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
 			}
 			// PC mouse events
 			if(evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN)
