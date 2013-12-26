@@ -49,10 +49,11 @@ static int executeCommand(const char * cmd)
 static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 {
 	createDialog();
-	addDialogText("You need custom kernel to use this app.");
+	addDialogText("You will need custom kernel to use this app.");
 	addDialogText("Do you wish to download and flash custom kernel?");
 	addDialogText("You will need root on your device.");
 	addDialogText("If you don't have root, please follow this link:");
+	addDialogText("");
 	addDialogText("");
 	addDialogUrlButton("https://github.com/pelya/android-keyboard-gadget");
 	addDialogYesNoButtons();
@@ -78,7 +79,7 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 	createDialog();
 	addDialogText("Custom kernel will be flashed to your device.");
 	addDialogText("This kernel is EXPERIMENTAL, and comes WTIH NO WARRANTY.");
-	addDialogText("Your device might become unstable, and reboot at random.");
+	addDialogText("Your device may become unstable, and reboot at random.");
 	addDialogText("");
 	addDialogText("Do you wish to flash custom kernel to your device?");
 	addDialogYesNoButtons();
@@ -104,5 +105,17 @@ int flashCustomKernel()
 	for( d = 0; supportedDevices[d].device; d++ )
 		if( executeCommand(supportedDevices[d].device) )
 			return flashCustomKernelDialog(supportedDevices[d]);
+
+	createDialog();
+	addDialogText("You will need a custom kernel to use this app.");
+	addDialogText("Prebuilt kernel is available only for Nexus 7 2012 WiFi with Android 4.4.2.");
+	addDialogText("You will need to compile and install the kernel yourself for other devices.");
+	addDialogText("Compilation instructions are available here:");
+	addDialogText("");
+	addDialogText("");
+	addDialogUrlButton("https://github.com/pelya/android-keyboard-gadget");
+	while( true )
+		mainLoop();
+
 	return 0;
 }

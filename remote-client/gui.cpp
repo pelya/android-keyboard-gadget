@@ -101,7 +101,7 @@ void createGuiMain()
 
 static int dialogResult = 0;
 static bool dialogAnswered = false;
-enum { DIALOG_MESSAGE_LINES = 5 };
+enum { DIALOG_MESSAGE_LINES = 7 };
 static char dialogMessage[DIALOG_MESSAGE_LINES][256];
 
 bool getDialogResult(int * result)
@@ -140,7 +140,7 @@ static void dialogDrawTextCallback(GuiElement_t * elem, bool pressed, int x, int
 	SDL_FillRect(SDL_GetVideoSurface(), &r, color);
 	for( int i = 0; i < DIALOG_MESSAGE_LINES; i++ )
 	{
-		renderStringColor(dialogMessage[i], elem->rect.x + elem->rect.w / 2, elem->rect.y + i * VID_Y * 0.1 + VID_Y * 0.05, 255, 255, 255);
+		renderStringColor(dialogMessage[i], elem->rect.x + elem->rect.w / 2, elem->rect.y + i * VID_Y * 0.1 + VID_Y * 0.04, 255, 255, 255);
 	}
 }
 
@@ -160,7 +160,7 @@ void createDialog()
 	gui.clear();
 
 	clearDialogText();
-	gui.push_back(GuiElement_t("Dialog Text", VID_X * 0.1, VID_Y * 0.1, VID_X * 0.8, VID_Y * 0.8, GuiElement_t::defaultInputCallback, dialogDrawTextCallback));
+	gui.push_back(GuiElement_t("Dialog Text", VID_X * 0.01, VID_Y * 0.01, VID_X * 0.98, VID_Y * 0.98, GuiElement_t::defaultInputCallback, dialogDrawTextCallback));
 }
 
 static const char * dialogUrlButtonUrl = "";
@@ -179,15 +179,19 @@ static void dialogUrlButton(GuiElement_t * elem, bool pressed, int x, int y)
 void addDialogUrlButton(const char *url)
 {
 	dialogUrlButtonUrl = url;
-	gui.push_back(GuiElement_t(url, VID_X * 0.11, VID_Y * 0.5, VID_X * 0.78, VID_Y * 0.1, dialogUrlButton));
+	int i, pos = 0;
+	for(int i = 0; i < DIALOG_MESSAGE_LINES - 1; i++)
+		if( strcmp(dialogMessage[i], "") != 0 )
+			pos = i + 1;
+	gui.push_back(GuiElement_t(url, VID_X * 0.05, pos * VID_Y * 0.1, VID_X * 0.90, VID_Y * 0.1, dialogUrlButton));
 }
 
 void addDialogYesNoButtons()
 {
 	dialogAnswered = false;
 	dialogResult = 0;
-	gui.push_back(GuiElement_t("Yes", VID_X * 0.2, VID_Y * 0.7, VID_X * 0.2, VID_Y * 0.1, dialogInputCallback<1>));
-	gui.push_back(GuiElement_t("No", VID_X * 0.6, VID_Y * 0.7, VID_X * 0.2, VID_Y * 0.1, dialogInputCallback<0>));
+	gui.push_back(GuiElement_t("Yes", VID_X * 0.2, VID_Y * 0.8, VID_X * 0.2, VID_Y * 0.1, dialogInputCallback<1>));
+	gui.push_back(GuiElement_t("No", VID_X * 0.6, VID_Y * 0.8, VID_X * 0.2, VID_Y * 0.1, dialogInputCallback<0>));
 }
 
 void processGui()

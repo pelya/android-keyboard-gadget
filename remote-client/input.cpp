@@ -31,14 +31,7 @@ void openInput()
 {
 	openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
-	{
-		if( !flashCustomKernel() )
-			showErrorMessage("Cannot initialize keyboard/mouse device\n"
-							 "To use this app, you have to install custom kernel\n"
-							 "with HID keyboard/mouse gadget driver.\n"
-							 "To install it, visit webpage\n"
-							 "https://github.com/pelya/android-keyboard-gadget");
-	}
+		flashCustomKernel();
 	for( int k = SDLK_FIRST; k < SDLK_LAST; k++ )
 	{
 		for( int s = 0; s < SDL_NUM_SCANCODES; s++ )
