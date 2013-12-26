@@ -64,3 +64,9 @@ To compile *boot.img*, launch commands
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
 You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
+
+What's next
+===========
+
+I'm planning to add remote control functionality, with live camera feed,
+so you can turn your Nexus 7 into an overpriced remote desktop / KVM switch solution.
