@@ -93,7 +93,7 @@ index 665a5f1..596016c 100644
  		}
  	}
 +	/* HID driver always enabled, it's the whole point of this kernel patch */
-+	if (!hid_enabled)
++	if (hid_enabled)
 +		android_enable_function(dev, conf, "hid");
  
  	/* Free uneeded configurations if exists */
