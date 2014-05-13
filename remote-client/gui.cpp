@@ -1,9 +1,14 @@
 #include <string.h>
+#include <SDL/SDL_image.h>
+
 #include "gfx.h"
 #include "gui.h"
 #include "input.h"
 
 struct TouchPointer_t touchPointers[MAX_POINTERS];
+static SDL_Surface* sClipboardImage1 = NULL;
+static SDL_Surface* sClipboardImage2 = NULL;
+static SDL_Surface* sKeyboardImage = NULL;
 
 std::vector<GuiElement_t> gui;
 
@@ -80,8 +85,81 @@ static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
+static void DrawKeyboardImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	GuiElement_t::defaultDrawCallback(elem, pressed, x, y);
+	drawImageCentered(sKeyboardImage, elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2);
+}
+
+static void DrawClipboardImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	GuiElement_t::defaultDrawCallback(elem, pressed, x, y);
+	drawImageCentered(elem->toggled ? sClipboardImage2 : sClipboardImage1, elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2);
+}
+
+static int checkShiftRequired( int *sym )
+{
+	switch( *sym )
+	{
+		case '!': *sym = '1'; return 1;
+		case '@': *sym = '2'; return 1;
+		case '#': *sym = '3'; return 1;
+		case '$': *sym = '4'; return 1;
+		case '%': *sym = '5'; return 1;
+		case '^': *sym = '6'; return 1;
+		case '&': *sym = '7'; return 1;
+		case '*': *sym = '8'; return 1;
+		case '(': *sym = '9'; return 1;
+		case ')': *sym = '0'; return 1;
+		case '_': *sym = '-'; return 1;
+		case '+': *sym = '='; return 1;
+		case '|': *sym = '\\';return 1;
+		case '<': *sym = ','; return 1;
+		case '>': *sym = '.'; return 1;
+		case '?': *sym = '/'; return 1;
+		case ':': *sym = ';'; return 1;
+		case '"': *sym = '\'';return 1;
+		case '{': *sym = '['; return 1;
+		case '}': *sym = ']'; return 1;
+		case '~': *sym = '`'; return 1;
+		default: if( *sym >= 'A' && *sym <= 'Z' ) { *sym += 'a' - 'A'; return 1; };
+	}
+	return 0;
+}
+
+static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	if( toggleElement(elem, pressed) )
+	{
+		char buf[1024];
+		SDL_ANDROID_GetClipboardText(buf, sizeof(buf));
+		for( int i = 0; buf[i]; i++ )
+		{
+			int key = buf[i];
+			int shiftRequired = checkShiftRequired(&key);
+
+			if( shiftRequired )
+				processKeyInput(SDLK_LSHIFT, 1);
+
+			processKeyInput((SDLKey)key, 1);
+			processKeyInput((SDLKey)key, 0);
+
+			if( shiftRequired )
+				processKeyInput(SDLK_LSHIFT, 0);
+		}
+	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+}
+
 void createGuiMain()
 {
+	if( !sClipboardImage1 )
+		sClipboardImage1 = IMG_Load("ic_menu_paste_holo_dark.png");
+	if( !sClipboardImage2 )
+		sClipboardImage2 = IMG_Load("ic_menu_paste_holo_light.png");
+	if( !sKeyboardImage )
+		sKeyboardImage = IMG_Load("keyboard.png");
+
 	gui.clear();
 	gui.push_back(GuiElement_t("Left", VID_X * 0.7, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_LEFT>));
 	gui.push_back(GuiElement_t("Right", VID_X * 0.9, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
@@ -90,11 +168,12 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Mouse", VID_X * 0.5, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
 
-	gui.push_back(GuiElement_t("Keyboard", VID_X * 0.5, 0, VID_X * 0.15, VID_Y * 0.1, keyboardToggleCallback));
-	gui.push_back(GuiElement_t("Ctrl", VID_X * 0.500, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
-	gui.push_back(GuiElement_t("Alt", VID_X * 0.575, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
+	gui.push_back(GuiElement_t("",      VID_X * 0.500, 0,           VID_X * 0.075, VID_Y * 0.1, keyboardToggleCallback, DrawKeyboardImageCallback));
+	gui.push_back(GuiElement_t("",      VID_X * 0.575, 0,           VID_X * 0.075, VID_Y * 0.1, ProcessClipboardImageCallback, DrawClipboardImageCallback));
+	gui.push_back(GuiElement_t("Ctrl",  VID_X * 0.500, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
+	gui.push_back(GuiElement_t("Alt",   VID_X * 0.575, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
 	gui.push_back(GuiElement_t("Shift", VID_X * 0.500, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
-	gui.push_back(GuiElement_t("Meta", VID_X * 0.575, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
+	gui.push_back(GuiElement_t("Meta",  VID_X * 0.575, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
 
 	//SDL_ShowScreenKeyboard(NULL);
 }

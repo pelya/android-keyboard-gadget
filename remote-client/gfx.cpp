@@ -84,3 +84,13 @@ void renderString(const char *c, int x, int y)
 {
 	renderStringColor(c, x, y, 255, 255, 255, SDL_GetVideoSurface());
 }
+
+void drawImageCentered(SDL_Surface * img, int x, int y, SDL_Surface * surf)
+{
+	SDL_Rect r;
+	r.x = x - img->w / 2;
+	r.y = y - img->h / 2;
+	r.w = img->w;
+	r.h = img->h;
+	SDL_BlitSurface(img, NULL, surf, &r);
+}

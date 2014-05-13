@@ -16,5 +16,6 @@ void deinitSDL();
 void renderStringColor(const char *c, int x, int y, int r, int g, int b, SDL_Surface * surf = SDL_GetVideoSurface());
 void renderString(const char *c, int x, int y);
 void showErrorMessage(const char *msg);
+void drawImageCentered(SDL_Surface * img, int x, int y, SDL_Surface * surf = SDL_GetVideoSurface());
 
 #endif
