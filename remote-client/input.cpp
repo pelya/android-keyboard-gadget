@@ -20,16 +20,38 @@ int mouseFd = -1;
 
 static int keycode_to_scancode[SDLK_LAST];
 
+static const char *DEV_KEYBOARD = "/dev/hidg0";
+static const char *DEV_MOUSE = "/dev/hidg1";
 
-static int openDevices()
+static void openDevices()
 {
-	keyboardFd = open("/dev/hidg0", O_RDWR, 0666);
-	mouseFd = open("/dev/hidg1", O_RDWR, 0666);
+	keyboardFd = open(DEV_KEYBOARD, O_RDWR, 0666);
+	mouseFd = open(DEV_MOUSE, O_RDWR, 0666);
+}
+
+static int devicesExist()
+{
+	struct stat st;
+	if (stat(DEV_KEYBOARD, &st) == 0 && stat(DEV_MOUSE, &st) == 0)
+		return 1;
+	return 0;
+}
+
+static void changeDevicePermissions()
+{
+	char cmd[256];
+	sprintf(cmd, "echo chown $USER %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
+	system(cmd);
 }
 
 void openInput()
 {
 	openDevices();
+	if( devicesExist() && (keyboardFd == -1 || mouseFd == -1) )
+	{
+		changeDevicePermissions();
+		openDevices();
+	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 		flashCustomKernel();
 	for( int k = SDLK_FIRST; k < SDLK_LAST; k++ )
