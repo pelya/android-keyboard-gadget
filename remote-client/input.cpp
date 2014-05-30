@@ -40,7 +40,12 @@ static int devicesExist()
 static void changeDevicePermissions()
 {
 	char cmd[256];
-	sprintf(cmd, "echo chown $USER %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
+	printf("%s: $USER=%d", __func__, getuid());
+	sprintf(cmd, "echo chown %d %s %s | su", getuid(), DEV_KEYBOARD, DEV_MOUSE);
+	printf("%s: %s", __func__, cmd);
+	system(cmd);
+	sprintf(cmd, "echo chmod 600 %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
+	printf("%s: %s", __func__, cmd);
 	system(cmd);
 }
 
