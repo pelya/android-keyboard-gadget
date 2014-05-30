@@ -4,7 +4,7 @@ Convert your Android device into USB keyboard/mouse, control your PC from your A
 Installation
 ============
 
-You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
+== Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 ==
 
 - Plug your device into PC using USB cable.
 - Power off the device.
@@ -16,6 +16,10 @@ You will need Nexus 7 2012 WiFi (Grouper), with Android 4.4.2 installed.
 - Launch command `fastboot flash boot boot.img`.
 - Reboot your device using Power button.
 - Install and run USB Keyboard app.
+
+== LG G2 ==
+
+- Download prebuilt kernel here:  http://forum.xda-developers.com/showthread.php?t=2725023
 
 Compilation
 ===========
