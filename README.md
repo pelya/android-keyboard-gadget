@@ -22,11 +22,17 @@ LG G2
 -----
 
 - Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2725023
- 
+
 Nexus 5 with Cyanogenmod/AOKP
 -----
 
 - Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2551441
+
+Sony Ericsson phones
+-----
+
+- Download prebuilt kernel here: http://legacyxperia.github.io/
+
 
 Compilation
 ===========

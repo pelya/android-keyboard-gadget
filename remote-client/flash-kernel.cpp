@@ -21,9 +21,9 @@ static struct supportedDevices_t
 supportedDevices[] =
 {
 	{
-		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 4.4.2 ]",
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 4.4.4 ]",
 		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/master/nexus7-2012-wifi-grouper/boot.img?raw=true'",
-		"echo 'e8a70eacea0a73589f21d070334fad802c0ccc34  boot.img' | $APPDIR/busybox sha1sum -c",
+		"echo 'a58769a63cd2338cdb9f6432e0891dc2901af73d  boot.img' | $APPDIR/busybox sha1sum -c",
 		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX\" | su",
 		"rm boot.img"
 	},
