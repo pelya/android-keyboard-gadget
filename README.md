@@ -4,7 +4,7 @@ Convert your Android device into USB keyboard/mouse, control your PC from your A
 Installation
 ============
 
-Nexus 7 2012 WiFi (Grouper), with Android 4.4.2
+Nexus 7 2012 WiFi (Grouper), with Android 4.4.4
 -----
 
 - Plug your device into PC using USB cable.
@@ -13,7 +13,7 @@ Nexus 7 2012 WiFi (Grouper), with Android 4.4.2
 - Copy appropriate fastboot executable from the directory `fastboot`.
 - Launch command `fastboot oem unlock`
 - Confirm unlock action by pressing Power button. This will factory reset your device.
-- Copy *boot.img* from directory `nexus7-2012-wifi-grouper`.
+- Copy *boot.img* from directory [nexus7-2012-wifi-grouper](nexus7-2012-wifi-grouper).
 - Launch command `fastboot flash boot boot.img`.
 - Reboot your device using Power button.
 - Install and run USB Keyboard app.
@@ -85,8 +85,14 @@ You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
 How it works
 ============
 
-The custom kernel you have compiled adds two new devices, /dev/hidg0 for keyboard,
-and /dev/hidg1 for mouse. You can open these two files, using open() system call,
+The custom kernel you have compiled with patch [kernel-tegra.patch](kernel-tegra.patch)
+adds two new devices, /dev/hidg0 for keyboard, and /dev/hidg1 for mouse.
+
+The patch [ueventd.patch](ueventd.patch) is only needed to set write permissions on these files -
+if your device is rooted, USB Keyboard app will attempt to modify permissions on these files on start,
+so you generally may skip this patch.
+
+You can open these two files, using open() system call,
 and write raw keyboard/mouse events there, using write() system call,
 which will be sent through USB cable to your PC.
 
@@ -109,7 +115,7 @@ Consequently, the maximum amount of keys that may be pressed at the same time is
 Professional or 'gamer' USB keyboards report several keyboard HID descriptors, which creates several keyboard devices in host PC,
 to overcome that 7-key limit.
 
-The scancode table for each key is available in file remote-client/scancodes.c -
+The scancode table for each key is available in file [scancodes.c](remote-client/scancodes.c) -
 that is,  key 'a' has scancode scancode 4, 'b' is 5, '1' is 30, Enter/Return is 40, Escape is 41 etc.
 Extended keys, such as Play/Pause, are not supported, because they require modifying USB descriptor in kernel patch.
 
@@ -128,7 +134,7 @@ Remaining 3 bytes are X movement offset, Y movement offset, and mouse wheel offs
 Horizontal wheel is not supported yet - buttons BUTTON_EXTENDED1 and BUTTON_EXTENDED2 may act as a horizontal wheel on some OSes.
 
 
-See functions outputSendKeys() and outputSendMouse() inside file remote-client/input.cpp
+See functions outputSendKeys() and outputSendMouse() inside file [input.cpp](remote-client/input.cpp)
 for reference implementation.
 
 What's next
