@@ -109,7 +109,7 @@ Keyboard event is an array of 8 byte length, first byte is a bitmask of currentl
 - RSUPER = 0x80, // Windows key
 - } ModifierKeys_t;
 
-Remaining 7 bytes is a list of all other keys currently pressed, one byte for one key, or 0 no key is pressed.
+Remaining 7 bytes is a list of all other keys currently pressed, one byte for one key, or 0 if no key is pressed.
 Consequently, the maximum amount of keys that may be pressed at the same time is 7, excluding modifier keys.
 
 Professional or 'gamer' USB keyboards report several keyboard HID descriptors, which creates several keyboard devices in host PC,
