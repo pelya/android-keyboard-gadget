@@ -86,7 +86,8 @@ How it works
 ============
 
 The custom kernel you have compiled adds two new devices, /dev/hidg0 for keyboard,
-and /dev/hidg1 for mouse. You can open these two files, and send raw keyboard/mouse events,
+and /dev/hidg1 for mouse. You can open these two files, using open() system call,
+and write raw keyboard/mouse events there, using write() system call,
 which will be sent through USB cable to your PC.
 
 Keyboard event is an array of 8 byte length, first byte is a bitmask of currently pressed modifier keys:
