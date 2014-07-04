@@ -33,6 +33,9 @@ Sony Ericsson phones
 
 - Download prebuilt kernel here: http://legacyxperia.github.io/
 
+Other devices
+-----
+You will have to compile the kernel yourself.
 
 Compilation
 ===========
@@ -62,9 +65,11 @@ To compile kernel, launch commands
 	export CROSS_COMPILE=arm-eabi-
 	cd tegra
 	git checkout android-tegra3-grouper-3.1-kitkat-mr1
-	patch -p1 < ../kernel-tegra.patch
+	patch -p1 < ../kernel-3.1.patch
 	make tegra3_android_defconfig
 	make -j4
+
+Use either [kernel-3.1.patch](kernel-3.1.patch) or [kernel-3.4.patch](kernel-3.4.patch), depending on your kernel version,
 
 To compile *boot.img*, launch commands
 
@@ -85,7 +90,7 @@ You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
 How it works
 ============
 
-The custom kernel you have compiled with patch [kernel-tegra.patch](kernel-tegra.patch)
+The custom kernel you have compiled with patch [kernel-3.1.patch](kernel-3.1.patch) or [kernel-3.4.patch](kernel-3.4.patch),
 adds two new devices, /dev/hidg0 for keyboard, and /dev/hidg1 for mouse.
 
 The patch [ueventd.patch](ueventd.patch) is only needed to set write permissions on these files -
