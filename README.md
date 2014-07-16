@@ -5,7 +5,7 @@ Installation
 ============
 
 Nexus 7 2012 WiFi (Grouper), with Android 4.4.4
------
+-----------------------------------------------
 
 - Plug your device into PC using USB cable.
 - Power off the device.
@@ -24,14 +24,19 @@ LG G2
 - Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2725023
 
 Nexus 5 with Cyanogenmod/AOKP
------
+-----------------------------
 
 - Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2551441
 
 Sony Ericsson phones
------
+--------------------
 
 - Download prebuilt kernel here: http://legacyxperia.github.io/
+
+Motorola Moto G with Cyanogenmod
+--------------------------------
+
+- Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2634745
 
 Other devices
 -----
