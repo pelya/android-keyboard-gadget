@@ -1,32 +1,32 @@
 diff --git a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
-index b8f51490..f9a58b3 100644
+index f62c0e7..2e9dffe 100644
 --- a/drivers/usb/gadget/Makefile
 +++ b/drivers/usb/gadget/Makefile
-@@ -55,7 +55,7 @@ g_webcam-y			:= webcam.o
+@@ -54,7 +54,7 @@ g_nokia-y			:= nokia.o
+ g_webcam-y			:= webcam.o
  g_ncm-y				:= ncm.o
  g_acm_ms-y			:= acm_ms.o
- g_tcm_usb_gadget-y		:= tcm_usb_gadget.o
 -g_android-y			:= android.o
 +g_android-y			:= android.o f_hid.o
  
  obj-$(CONFIG_USB_ZERO)		+= g_zero.o
  obj-$(CONFIG_USB_AUDIO)		+= g_audio.o
 diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
-index 665a5f1..596016c 100644
+index 4e73bf1..8171fba 100644
 --- a/drivers/usb/gadget/android.c
 +++ b/drivers/usb/gadget/android.c
-@@ -67,6 +67,9 @@
- #include "f_ccid.c"
+@@ -50,6 +50,9 @@
+ #include "f_adb.c"
  #include "f_mtp.c"
  #include "f_accessory.c"
 +#include "f_hid.h"
 +#include "f_hid_android_keyboard.c"
 +#include "f_hid_android_mouse.c"
- #ifdef CONFIG_USB_ANDROID_CDC_ECM
- #include "f_ecm.c"
- #else
-@@ -1785,6 +1788,41 @@ static struct android_usb_function uasp_function = {
- 	.bind_config	= uasp_function_bind_config,
+ #define USB_ETH_RNDIS y
+ #include "f_rndis.c"
+ #include "rndis.c"
+@@ -980,6 +983,41 @@ static struct android_usb_function audio_source_function = {
+ 	.attributes	= audio_source_function_attributes,
  };
  
 +static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
@@ -65,39 +65,37 @@ index 665a5f1..596016c 100644
 +};
 +
  static struct android_usb_function *supported_functions[] = {
- 	&mbim_function,
- 	&ecm_qc_function,
-@@ -1810,6 +1848,7 @@ static struct android_usb_function *supported_functions[] = {
+ 	&ffs_function,
+ 	&adb_function,
+@@ -990,6 +1028,7 @@ static struct android_usb_function *supported_functions[] = {
+ 	&mass_storage_function,
  	&accessory_function,
  	&audio_source_function,
- 	&uasp_function,
 +	&hid_function,
  	NULL
  };
  
-@@ -2042,6 +2081,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 	char *name;
- 	char buf[256], *b;
+@@ -1137,6 +1176,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
  	int err;
-+	int hid_enabled;
+ 	int is_ffs;
+ 	int ffs_enabled = 0;
++	int hid_enabled = 0;
  
  	mutex_lock(&dev->mutex);
  
-@@ -2081,9 +2121,14 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 				if (err)
- 					pr_err("android_usb: Cannot enable %s",
- 						name);
-+				if (!strcmp(name, "hid"))
-+					hid_enabled = 1;
- 			}
- 		}
+@@ -1183,7 +1223,12 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 		if (err)
+ 			pr_err("android_usb: Cannot enable '%s' (%d)",
+ 							   name, err);
++		if (!strcmp(name, "hid"))
++			hid_enabled = 1;
  	}
 +	/* HID driver always enabled, it's the whole point of this kernel patch */
 +	if (hid_enabled)
-+		android_enable_function(dev, conf, "hid");
++		android_enable_function(dev, "hid");
  
- 	/* Free uneeded configurations if exists */
- 	while (curr_conf->next != &dev->configs) {
+ 	mutex_unlock(&dev->mutex);
+ 
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
 index b211342..de125185 100644
 --- a/drivers/usb/gadget/f_hid.c
@@ -351,46 +349,47 @@ index 0000000..76180eb
 +};
 diff --git a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
 new file mode 100644
-index 0000000..e86cd05
+index 0000000..8a6ab0a
 --- /dev/null
 +++ b/drivers/usb/gadget/f_hid_android_mouse.c
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,40 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
 +
-+/* HID descriptor for a keyboard */
++/* HID descriptor for a mouse */
 +static struct hidg_func_descriptor ghid_device_android_mouse = {
 +	.subclass      = 0, /* No subclass */
 +	.protocol      = 2, /* Mouse */
-+	.report_length = 8,
-+
-+	/* Copied from: http://www.usblyzer.com/usb-human-interface-device-hid-class-decoder.htm */
-+	.report_desc_length	= 48,
++	.report_length = 4,
++	.report_desc_length	= 52,
 +	.report_desc = {
-+		0x05, 0x01,	/* USAGE_PAGE (Generic Desktop)	          */
-+		0x09, 0x02,	/* USAGE (Mouse)                          */
-+		0xA1, 0x01,	/* COLLECTION (Application)               */
-+		0x09, 0x01,	/* USAGE_PAGE (Pointer)                   */
-+		0xA1, 0x00,	/* COLLECTION (Physical)                  */
-+		0x05, 0x09,	/* I'm too lazy to fill up descriptions   */
-+		0x19, 0x01,	/* because I've copied these bytecodes    */
-+		0x29, 0x08,	/* verbatim from that web page            */
-+		0x15, 0x00,	/* and I don't have any slightest clue    */
-+		0x25, 0x01,	/* of their meaning or how they are       */
-+		0x75, 0x01,	/* supposed to work                       */
-+		0x95, 0x08,	/*                                        */
-+		0x81, 0x02,	/*                                        */
-+		0x05, 0x01,	/*                                        */
-+		0x09, 0x30,	/*                                        */
-+		0x09, 0x31,	/*                                        */
-+		0x09, 0x38,	/*                                        */
-+		0x09, 0xB8,	/*                                        */
-+		0x15, 0x81,	/*                                        */
-+		0x25, 0x7F,	/*                                        */
-+		0x75, 0x08,	/*                                        */
-+		0x95, 0x04,	/*                                        */
-+		0x81, 0x06,	/*                                        */
-+		0xc0,		/* END_COLLECTION                         */
-+		0xc0		/* END_COLLECTION                         */
++		0x05, 0x01,  //Usage Page(Generic Desktop Controls)
++		0x09, 0x02,  //Usage (Mouse)
++		0xa1, 0x01,  //Collection (Application)
++		0x09, 0x01,  //Usage (pointer)
++		0xa1, 0x00,  //Collection (Physical)
++		0x05, 0x09,  //Usage Page (Button)
++		0x19, 0x01,  //Usage Minimum(1)
++		0x29, 0x05,  //Usage Maximum(5)
++		0x15, 0x00,  //Logical Minimum(1)
++		0x25, 0x01,  //Logical Maximum(1)
++		0x95, 0x05,  //Report Count(5)
++		0x75, 0x01,  //Report Size(1)
++		0x81, 0x02,  //Input(Data,Variable,Absolute,BitField)
++		0x95, 0x01,  //Report Count(1)
++		0x75, 0x03,  //Report Size(3)
++		0x81, 0x01,  //Input(Constant,Array,Absolute,BitField)
++		0x05, 0x01,  //Usage Page(Generic Desktop Controls)
++		0x09, 0x30,  //Usage(x)
++		0x09, 0x31,  //Usage(y)
++		0x09, 0x38,  //Usage(Wheel)
++		0x15, 0x81,  //Logical Minimum(-127)
++		0x25, 0x7F,  //Logical Maximum(127)
++		0x75, 0x08,  //Report Size(8)
++		0x95, 0x03,  //Report Count(3)
++		0x81, 0x06,  //Input(Data,Variable,Relative,BitField)
++		0xc0,  //End Collection
++		0xc0  //End Collection
 +	}
 +};
++
