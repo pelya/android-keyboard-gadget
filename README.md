@@ -21,26 +21,29 @@ Nexus 7 2012 WiFi (Grouper), with Android 4.4.4
 LG G2
 -----
 
-- Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2725023
+- http://forum.xda-developers.com/showthread.php?t=2725023
 
-Nexus 5 with Cyanogenmod/AOKP
------------------------------
+Nexus 5
+-------
 
-- Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2551441
+- http://forum.xda-developers.com/showthread.php?t=2551441 
+- http://forum.xda-developers.com/showthread.php?t=2527130
 
 Sony Ericsson phones
 --------------------
 
-- Download prebuilt kernel here: http://legacyxperia.github.io/
+- http://legacyxperia.github.io/
 
 Motorola Moto G with Cyanogenmod
 --------------------------------
 
-- Download prebuilt kernel here: http://forum.xda-developers.com/showthread.php?t=2634745
+- http://forum.xda-developers.com/showthread.php?t=2634745
+- http://forum.xda-developers.com/showthread.php?t=2786336
 
 Other devices
------
-You will have to compile the kernel yourself.
+-------------
+
+- You will have to compile the kernel yourself.
 
 Compilation
 ===========
