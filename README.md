@@ -26,8 +26,13 @@ LG G2
 Nexus 5
 -------
 
-- http://forum.xda-developers.com/showthread.php?t=2551441 
+- http://forum.xda-developers.com/showthread.php?t=2551441
 - http://forum.xda-developers.com/showthread.php?t=2527130
+
+Nexus 4
+-------
+
+- http://forum.xda-developers.com/showthread.php?t=2548872
 
 Sony Ericsson phones
 --------------------
