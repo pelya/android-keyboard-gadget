@@ -50,6 +50,42 @@ Other devices
 
 - You will have to compile the kernel yourself.
 
+Scripting
+=========
+
+There is a possibility to send keypresses in an automated way, using terminal emulator for Android or similar app.
+This is done using [hid-gadget-test](hid-gadget-test/hid-gadget-test) utility.
+
+First, copy this utility to your device.
+
+	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
+
+You will need to set world-writable permissions on /dev/hidg0, or run hid-gadget-test from root shell.
+
+	su
+	chmod 666 /dev/hidg0 /dev/hidg1
+
+Then, use hid-gadget-test to send keypresses.
+
+	cd /data/local/tmp
+
+	# Send letter 'a'
+	echo a | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Send letter 'B'
+	echo left-shift b | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Send string 'abcdeZ'
+	for C in a b c d e 'left-shift z' ; do echo "$C" ; sleep 0.1 ; done | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# You may combine several modifier keys
+	echo left-ctrl left-shift enter | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Try to guess what this command sends
+	echo left-ctrl left-alt del | ./hid-gadget-test /dev/hidg0 keyboard
+
+The list of keys that this utility supports may be found [here](hid-gadget-test/jni/hid-gadget-test.c#L33)
+
 Compilation
 ===========
 
