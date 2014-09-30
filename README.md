@@ -84,7 +84,7 @@ Then, use hid-gadget-test to send keypresses.
 	# Try to guess what this command sends
 	echo left-ctrl left-alt del | ./hid-gadget-test /dev/hidg0 keyboard
 
-The list of keys that this utility supports may be found [here](hid-gadget-test/jni/hid-gadget-test.c#L33)
+Here is [the list of keys that this utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
 
 Compilation
 ===========
@@ -169,10 +169,8 @@ Consequently, the maximum amount of keys that may be pressed at the same time is
 Professional or 'gamer' USB keyboards report several keyboard HID descriptors, which creates several keyboard devices in host PC,
 to overcome that 7-key limit.
 
-The scancode table for each key is available in file [scancodes.c](remote-client/scancodes.c) -
-that is,  key 'a' has scancode scancode 4, 'b' is 5, '1' is 30, Enter/Return is 40, Escape is 41 etc.
+The scancode table for each key is available [in hid-gadget-test utility](hid-gadget-test/jni/hid-gadget-test.c#L33).
 Extended keys, such as Play/Pause, are not supported, because they require modifying USB descriptor in kernel patch.
-
 
 Mouse event is an array of 4 bytes, first byte is a bitmask of currently pressed mouse buttons:
 
@@ -186,7 +184,6 @@ Mouse event is an array of 4 bytes, first byte is a bitmask of currently pressed
 
 Remaining 3 bytes are X movement offset, Y movement offset, and mouse wheel offset, represented as signed integers.
 Horizontal wheel is not supported yet - buttons BUTTON_EXTENDED1 and BUTTON_EXTENDED2 may act as a horizontal wheel on some OSes.
-
 
 See functions outputSendKeys() and outputSendMouse() inside file [input.cpp](remote-client/input.cpp)
 for reference implementation.
