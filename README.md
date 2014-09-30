@@ -152,16 +152,16 @@ which will be sent through USB cable to your PC.
 
 Keyboard event is an array of 8 byte length, first byte is a bitmask of currently pressed modifier keys:
 
-- typedef enum {
-- LCTRL = 0x1,
-- LSHIFT = 0x2,
-- LALT = 0x4,
-- LSUPER = 0x8, // Windows key
-- RCTRL = 0x10,
-- RSHIFT = 0x20,
-- RALT = 0x40,
-- RSUPER = 0x80, // Windows key
-- } ModifierKeys_t;
+	typedef enum {
+		LCTRL = 0x1,
+		LSHIFT = 0x2,
+		LALT = 0x4,
+		LSUPER = 0x8, // Windows key
+		RCTRL = 0x10,
+		RSHIFT = 0x20,
+		RALT = 0x40,
+		RSUPER = 0x80, // Windows key
+	} ModifierKeys_t;
 
 Remaining 7 bytes is a list of all other keys currently pressed, one byte for one key, or 0 if no key is pressed.
 Consequently, the maximum amount of keys that may be pressed at the same time is 7, excluding modifier keys.
@@ -174,13 +174,13 @@ Extended keys, such as Play/Pause, are not supported, because they require modif
 
 Mouse event is an array of 4 bytes, first byte is a bitmask of currently pressed mouse buttons:
 
-- typedef enum {
-- BUTTON_LEFT = 0x1,
-- BUTTON_RIGHT = 0x2,
-- BUTTON_MIDDLE = 0x4,
-- BUTTON_EXTENDED1 = 0x8,
-- BUTTON_EXTENDED2 = 0x10,
-- } MouseButtons_t;
+	typedef enum {
+		BUTTON_LEFT = 0x1,
+		BUTTON_RIGHT = 0x2,
+		BUTTON_MIDDLE = 0x4,
+		BUTTON_EXTENDED1 = 0x8,
+		BUTTON_EXTENDED2 = 0x10,
+	} MouseButtons_t;
 
 Remaining 3 bytes are X movement offset, Y movement offset, and mouse wheel offset, represented as signed integers.
 Horizontal wheel is not supported yet - buttons BUTTON_EXTENDED1 and BUTTON_EXTENDED2 may act as a horizontal wheel on some OSes.
