@@ -50,6 +50,42 @@ Other devices
 
 - You will have to compile the kernel yourself.
 
+Scripting
+=========
+
+There is a possibility to send keypresses in an automated way, using terminal emulator for Android or similar app.
+This is done using [hid-gadget-test](hid-gadget-test/hid-gadget-test) utility.
+
+First, copy this utility to your device.
+
+	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
+
+You will need to set world-writable permissions on /dev/hidg0, or run hid-gadget-test from root shell.
+
+	su
+	chmod 666 /dev/hidg0 /dev/hidg1
+
+Then, use hid-gadget-test to send keypresses.
+
+	cd /data/local/tmp
+
+	# Send letter 'a'
+	echo a | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Send letter 'B'
+	echo left-shift b | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Send string 'abcdeZ'
+	for C in a b c d e 'left-shift z' ; do echo "$C" ; sleep 0.1 ; done | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# You may combine several modifier keys
+	echo left-ctrl left-shift enter | ./hid-gadget-test /dev/hidg0 keyboard
+
+	# Try to guess what this command sends
+	echo left-ctrl left-alt del | ./hid-gadget-test /dev/hidg0 keyboard
+
+Here is [the list of keys that this utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
+
 Compilation
 ===========
 
@@ -116,16 +152,16 @@ which will be sent through USB cable to your PC.
 
 Keyboard event is an array of 8 byte length, first byte is a bitmask of currently pressed modifier keys:
 
-- typedef enum {
-- LCTRL = 0x1,
-- LSHIFT = 0x2,
-- LALT = 0x4,
-- LSUPER = 0x8, // Windows key
-- RCTRL = 0x10,
-- RSHIFT = 0x20,
-- RALT = 0x40,
-- RSUPER = 0x80, // Windows key
-- } ModifierKeys_t;
+	typedef enum {
+		LCTRL = 0x1,
+		LSHIFT = 0x2,
+		LALT = 0x4,
+		LSUPER = 0x8, // Windows key
+		RCTRL = 0x10,
+		RSHIFT = 0x20,
+		RALT = 0x40,
+		RSUPER = 0x80, // Windows key
+	} ModifierKeys_t;
 
 Remaining 7 bytes is a list of all other keys currently pressed, one byte for one key, or 0 if no key is pressed.
 Consequently, the maximum amount of keys that may be pressed at the same time is 7, excluding modifier keys.
@@ -133,24 +169,21 @@ Consequently, the maximum amount of keys that may be pressed at the same time is
 Professional or 'gamer' USB keyboards report several keyboard HID descriptors, which creates several keyboard devices in host PC,
 to overcome that 7-key limit.
 
-The scancode table for each key is available in file [scancodes.c](remote-client/scancodes.c) -
-that is,  key 'a' has scancode scancode 4, 'b' is 5, '1' is 30, Enter/Return is 40, Escape is 41 etc.
+The scancode table for each key is available [in hid-gadget-test utility](hid-gadget-test/jni/hid-gadget-test.c#L33).
 Extended keys, such as Play/Pause, are not supported, because they require modifying USB descriptor in kernel patch.
-
 
 Mouse event is an array of 4 bytes, first byte is a bitmask of currently pressed mouse buttons:
 
-- typedef enum {
-- BUTTON_LEFT = 0x1,
-- BUTTON_RIGHT = 0x2,
-- BUTTON_MIDDLE = 0x4,
-- BUTTON_EXTENDED1 = 0x8,
-- BUTTON_EXTENDED2 = 0x10,
-- } MouseButtons_t;
+	typedef enum {
+		BUTTON_LEFT = 0x1,
+		BUTTON_RIGHT = 0x2,
+		BUTTON_MIDDLE = 0x4,
+		BUTTON_EXTENDED1 = 0x8,
+		BUTTON_EXTENDED2 = 0x10,
+	} MouseButtons_t;
 
 Remaining 3 bytes are X movement offset, Y movement offset, and mouse wheel offset, represented as signed integers.
 Horizontal wheel is not supported yet - buttons BUTTON_EXTENDED1 and BUTTON_EXTENDED2 may act as a horizontal wheel on some OSes.
-
 
 See functions outputSendKeys() and outputSendMouse() inside file [input.cpp](remote-client/input.cpp)
 for reference implementation.
