@@ -56,6 +56,22 @@ void openInput()
 	{
 		changeDevicePermissions();
 		openDevices();
+		if( keyboardFd == -1 || mouseFd == -1 )
+		{
+			char cmd[256];
+			createDialog();
+			addDialogText("Your kernel is supported by this app");
+			addDialogText("But your system is not rooted - cannot open device files");
+			addDialogText("Please execute following command from the root shell, and restart this app:");
+			addDialogText("");
+			sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
+			addDialogText(cmd);
+			addDialogText("");
+			addDialogText("Press Back to exit");
+			while( true )
+				mainLoop();
+			exit(0);
+		}
 	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 		flashCustomKernel();
