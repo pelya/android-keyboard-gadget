@@ -26,6 +26,8 @@ static const char *DEV_CHECK_REPLUGGED = "/sys/devices/virtual/hidg/hidg0";
 
 static void openDevices()
 {
+	printf("openDevices() %s %s", DEV_KEYBOARD, DEV_MOUSE);
+
 	if (keyboardFd != -1)
 		close(keyboardFd);
 	if (mouseFd != -1)
@@ -33,6 +35,20 @@ static void openDevices()
 	keyboardFd = open(DEV_KEYBOARD, O_RDWR, 0666);
 	mouseFd = open(DEV_MOUSE, O_RDWR, 0666);
 }
+
+/*
+static void closeDevices()
+{
+	printf("closeDevices() %s %s", DEV_KEYBOARD, DEV_MOUSE);
+
+	if (keyboardFd != -1)
+		close(keyboardFd);
+	if (mouseFd != -1)
+		close(mouseFd);
+	keyboardFd = -1;
+	mouseFd = -1;
+}
+*/
 
 static int devicesExist()
 {
@@ -95,12 +111,21 @@ void openInput()
 
 static void checkDeviceReplugged()
 {
-	static unsigned long last_mtime, last_mtime_nsec;
+	static unsigned long last_mtime;
+	static unsigned long last_mtime_nsec;
 	struct stat st;
 	if (stat(DEV_CHECK_REPLUGGED, &st) != 0)
 		return;
+	//printf("DEV_CHECK_REPLUGGED: %s %ld", DEV_CHECK_REPLUGGED, st.st_mtime);
 	if (st.st_mtime != last_mtime || st.st_mtime_nsec != last_mtime_nsec)
+	{
+		openInput();
+		/*
+		closeDevices();
+		sleep(1);
 		openDevices();
+		*/
+	}
 	last_mtime = st.st_mtime;
 	last_mtime_nsec = st.st_mtime_nsec;
 }
