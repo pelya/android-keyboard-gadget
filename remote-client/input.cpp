@@ -95,13 +95,14 @@ void openInput()
 
 static void checkDeviceReplugged()
 {
-	static struct timespec last_mtime;
+	static unsigned long last_mtime, last_mtime_nsec;
 	struct stat st;
 	if (stat(DEV_CHECK_REPLUGGED, &st) != 0)
 		return;
-	if (st.st_mtim != last_mtime)
+	if (st.st_mtime != last_mtime || st.st_mtime_nsec != last_mtime_nsec)
 		openDevices();
-	last_mtime = st.st_mtim;
+	last_mtime = st.st_mtime;
+	last_mtime_nsec = st.st_mtime_nsec;
 }
 
 static void outputSendKeys()
@@ -153,6 +154,8 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel, int
 		openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
 		return;
+
+	//printf("outputSendMouse: %d %d b %d %d %d %d", x, y, b1, b2, b3, wheel);
 
 	event[0] |= b1 ? 1 : 0;
 	event[0] |= b2 ? 2 : 0;

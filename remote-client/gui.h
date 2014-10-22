@@ -37,7 +37,7 @@ struct GuiElement_t
 		this->locked = false;
 	}
 
-	GuiElement_t(const char *[] text, int x = 0, int y = 0, int w = 0, int h = 0, GuiElementCallback_t input = defaultInputCallback, GuiElementCallback_t draw = defaultDrawCallback)
+	GuiElement_t(const char ** text, int x = 0, int y = 0, int w = 0, int h = 0, GuiElementCallback_t input = defaultInputCallback, GuiElementCallback_t draw = defaultDrawCallback)
 	{
 		this->rect.x = x;
 		this->rect.y = y;

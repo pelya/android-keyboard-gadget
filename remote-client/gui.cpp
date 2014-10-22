@@ -13,7 +13,7 @@ static SDL_Surface* sKeyboardImage = NULL;
 
 std::vector<GuiElement_t> gui;
 
-enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = VID_X * 0.5, TOUCHPAD_Y1 = VID_Y };
+enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = int(VID_X * 0.6), TOUCHPAD_Y1 = VID_Y };
 
 void GuiElement_t::defaultInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
@@ -41,7 +41,7 @@ void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x,
 	for( int i = 0; i < elem->text.size(); i++ )
 	{
 		renderStringColor(	elem->text[i].c_str(), elem->rect.x + elem->rect.w / 2,
-							elem->rect.y + elem->rect.h / 2 + i * TEXT_H - elem->text.size() * TEXT_H / 2,
+							elem->rect.y + elem->rect.h / 2 + i * TEXT_H * 1.2f - elem->text.size() * TEXT_H * 1.2f / 2,
 							elem->toggled ? 0 : 255, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255);
 	}
 }
@@ -69,16 +69,21 @@ static void keyInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 template<int button>
 static void mouseInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
+	static bool toggled = 0;
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
-	mouseButtons[button] = elem->toggled || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button));
+	if( toggled != elem->toggled )
+	{
+		mouseButtons[button] = elem->toggled; // || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button));
+		toggled = elem->toggled;
+	}
 }
 
 static void mouseMovementCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
 	if( elem->toggled && pressed )
 	{
-		mouseCoords[0] = x - elem->x;
-		mouseCoords[1] = y - elem->y;
+		mouseCoords[0] += x - elem->x;
+		mouseCoords[1] += y - elem->y;
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
@@ -175,30 +180,39 @@ void createGuiMain()
 		sKeyboardImage = IMG_Load("keyboard.png");
 
 	gui.clear();
-	gui.push_back(GuiElement_t("Left", VID_X * 0.7, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_LEFT>));
-	gui.push_back(GuiElement_t("Right", VID_X * 0.9, 0, VID_X * 0.1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
-	gui.push_back(GuiElement_t("Wheel", VID_X * 0.8, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
-	gui.push_back(GuiElement_t("Up", VID_X * 0.8, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
-	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
-	gui.push_back(GuiElement_t("Mouse", VID_X * 0.5, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Left", VID_X * 0.8,                                 0, VID_X * 0.2 / 3, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_LEFT>));
+	gui.push_back(GuiElement_t("Up",   VID_X * 0.8 + VID_X * 0.2 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
+	gui.push_back(GuiElement_t("Mid",  VID_X * 0.8 + VID_X * 0.2 / 3,     VID_Y * 0.1, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
+	gui.push_back(GuiElement_t("Down", VID_X * 0.8 + VID_X * 0.2 / 3, VID_Y * 0.1 * 2, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
+	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
+	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
 	gui.push_back(GuiElement_t( (const char *[])
 		{
 			"Touchpad",
-			"-",
+			"",
 			"Swipe to move mouse cursor",
+			"",
 			"Tap or hold for left mouse click",
-			"Touch with two fingers for right mouse click",
-			"Touch with three fingers for middle mouse click",
-			"Swipe with two fingers for mouse wheel",
+			"to send left mouse click",
+			"",
+			"Touch with two fingers",
+			"to send right mouse click",
+			"",
+			"Touch with three fingers",
+			"to send middle mouse click",
+			"",
+			"Swipe with two fingers",
+			"to scroll mouse wheel",
+			NULL
 		},
 		TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1, touchpadCallback));
 
-	gui.push_back(GuiElement_t("",      VID_X * 0.500, 0,           VID_X * 0.075, VID_Y * 0.1, keyboardToggleCallback, DrawKeyboardImageCallback));
-	gui.push_back(GuiElement_t("",      VID_X * 0.575, 0,           VID_X * 0.075, VID_Y * 0.1, ProcessClipboardImageCallback, DrawClipboardImageCallback));
-	gui.push_back(GuiElement_t("Ctrl",  VID_X * 0.500, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
-	gui.push_back(GuiElement_t("Alt",   VID_X * 0.575, VID_Y * 0.1, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
-	gui.push_back(GuiElement_t("Shift", VID_X * 0.500, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
-	gui.push_back(GuiElement_t("Meta",  VID_X * 0.575, VID_Y * 0.2, VID_X * 0.075, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
+	gui.push_back(GuiElement_t("",      VID_X * 0.6, 0,           VID_X * 0.1, VID_Y * 0.1, keyboardToggleCallback, DrawKeyboardImageCallback));
+	gui.push_back(GuiElement_t("",      VID_X * 0.7, 0,           VID_X * 0.1, VID_Y * 0.1, ProcessClipboardImageCallback, DrawClipboardImageCallback));
+	gui.push_back(GuiElement_t("Ctrl",  VID_X * 0.6, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LCTRL>));
+	gui.push_back(GuiElement_t("Alt",   VID_X * 0.7, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
+	gui.push_back(GuiElement_t("Shift", VID_X * 0.6, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
+	gui.push_back(GuiElement_t("Meta",  VID_X * 0.7, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
 
 	//SDL_ShowScreenKeyboard(NULL);
 }
