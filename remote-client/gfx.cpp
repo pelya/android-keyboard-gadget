@@ -12,6 +12,7 @@ void showErrorMessage(const char *msg)
 	SDL_Event event;
 	const char * s;
 	int y = VID_Y/4;
+	printf("Error: %s", msg);
 	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
 	for( s = msg; s && s[0]; s = strchr(s, '\n'), s += (s ? 1 : 0), y += 35 )
 	{
@@ -33,7 +34,7 @@ void showErrorMessage(const char *msg)
 				case SDL_KEYDOWN:
 				if (event.key.keysym.sym == SDLK_UNDO || event.key.keysym.sym == SDLK_ESCAPE)
 					exit(1);
-				break;
+				//break;
 			}
 		}
 	}

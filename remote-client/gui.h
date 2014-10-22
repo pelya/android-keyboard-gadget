@@ -60,7 +60,7 @@ extern std::vector<GuiElement_t> gui;
 
 void createGuiMain();
 void processGui();
-void mainLoop();
+void mainLoop(bool noHid = false);
 
 void createDialog();
 bool getDialogResult(int * result);

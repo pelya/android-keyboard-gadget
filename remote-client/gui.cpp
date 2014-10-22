@@ -41,7 +41,7 @@ void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x,
 	for( int i = 0; i < elem->text.size(); i++ )
 	{
 		renderStringColor(	elem->text[i].c_str(), elem->rect.x + elem->rect.w / 2,
-							elem->rect.y + elem->rect.h / 2 + i * TEXT_H * 1.2f - elem->text.size() * TEXT_H * 1.2f / 2,
+							elem->rect.y + elem->rect.h / 2 + i * TEXT_H * 1.2f - (elem->text.size() - 1) * TEXT_H * 1.2f / 2,
 							elem->toggled ? 0 : 255, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255);
 	}
 }
@@ -339,7 +339,7 @@ void processGui()
 	}
 }
 
-void mainLoop()
+void mainLoop(bool noHid)
 {
 	static Uint32 lastEvent = 0;
 	SDL_Event evt;
@@ -397,9 +397,12 @@ void mainLoop()
 		}
 	}
 
-	processTouchpad(TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1);
 	processGui();
-	processMouseInput();
+	if( !noHid )
+	{
+		processTouchpad(TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1);
+		processMouseInput();
+	}
 
 	SDL_Flip(SDL_GetVideoSurface());
 	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);

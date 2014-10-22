@@ -39,7 +39,7 @@ static int executeCommand(const char * cmd)
 	{
 		printf("executeCommand >> %s", buf);
 		addDialogText(buf);
-		mainLoop();
+		mainLoop(true);
 	}
 	if( pclose(ff) != 0 )
 		return 0;
@@ -60,19 +60,19 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 
 	int result = 0;
 	while( !getDialogResult(&result) )
-		mainLoop();
+		mainLoop(true);
 
 	if( result == 0 )
 		exit(0);
 
 	createDialog();
 	addDialogText("Downloading package...");
-	mainLoop();
+	mainLoop(true);
 	if( !executeCommand(dev.download) )
 		showErrorMessage("Cannot download kernel, please check your network connectivity");
 
 	addDialogText("Validating package...");
-	mainLoop();
+	mainLoop(true);
 	if( !executeCommand(dev.checksum) )
 		showErrorMessage("Downloaded package was corrupted, please re-download it");
 
@@ -84,7 +84,7 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 	addDialogText("Do you wish to flash custom kernel to your device?");
 	addDialogYesNoButtons();
 	while( !getDialogResult(&result) )
-		mainLoop();
+		mainLoop(true);
 
 	if( result == 0 )
 		exit(0);
@@ -115,7 +115,7 @@ int flashCustomKernel()
 	addDialogText("");
 	addDialogUrlButton("https://github.com/pelya/android-keyboard-gadget");
 	while( true )
-		mainLoop();
+		mainLoop(true);
 
 	return 0;
 }
