@@ -12,8 +12,8 @@
 bool keys[SDLK_LAST];
 //bool oldkeys[SDLK_LAST];
 int mouseCoords[2];
-bool mouseButtons[SDL_BUTTON_WHEELDOWN+1];
-bool oldmouseButtons[SDL_BUTTON_WHEELDOWN+1];
+bool mouseButtons[SDL_BUTTON_X2+1];
+bool oldmouseButtons[SDL_BUTTON_X2+1];
 
 int keyboardFd = -1;
 int mouseFd = -1;
@@ -22,9 +22,14 @@ static int keycode_to_scancode[SDLK_LAST];
 
 static const char *DEV_KEYBOARD = "/dev/hidg0";
 static const char *DEV_MOUSE = "/dev/hidg1";
+static const char *DEV_CHECK_REPLUGGED = "/sys/devices/virtual/hidg/hidg0";
 
 static void openDevices()
 {
+	if (keyboardFd != -1)
+		close(keyboardFd);
+	if (mouseFd != -1)
+		close(mouseFd);
 	keyboardFd = open(DEV_KEYBOARD, O_RDWR, 0666);
 	mouseFd = open(DEV_MOUSE, O_RDWR, 0666);
 }
@@ -88,10 +93,22 @@ void openInput()
 	}
 }
 
+static void checkDeviceReplugged()
+{
+	static struct timespec last_mtime;
+	struct stat st;
+	if (stat(DEV_CHECK_REPLUGGED, &st) != 0)
+		return;
+	if (st.st_mtim != last_mtime)
+		openDevices();
+	last_mtime = st.st_mtim;
+}
+
 static void outputSendKeys()
 {
 	uint8_t event[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+	checkDeviceReplugged();
 	if( keyboardFd == -1 || mouseFd == -1 )
 		openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
@@ -127,10 +144,11 @@ static void outputSendKeys()
 	}
 }
 
-static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel)
+static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel, int b6, int b7)
 {
 	uint8_t event[4] = {0, 0, 0, 0};
 
+	checkDeviceReplugged();
 	if( keyboardFd == -1 || mouseFd == -1 )
 		openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
@@ -139,6 +157,8 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel)
 	event[0] |= b1 ? 1 : 0;
 	event[0] |= b2 ? 2 : 0;
 	event[0] |= b3 ? 4 : 0;
+	event[0] |= b6 ? 32 : 0;
+	event[0] |= b7 ? 64 : 0;
 	event[1] = x;
 	event[2] = y;
 	event[3] = wheel >= 0 ? wheel : 256 + wheel;
@@ -172,7 +192,8 @@ void processMouseInput()
 		outputSendMouse(mouseCoords[0], mouseCoords[1],
 						mouseButtons[SDL_BUTTON_LEFT], mouseButtons[SDL_BUTTON_RIGHT], mouseButtons[SDL_BUTTON_MIDDLE],
 						(mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] && mouseButtons[SDL_BUTTON_WHEELUP]) ? 1 :
-						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? -1 : 0);
+						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? -1 : 0,
+						mouseButtons[SDL_BUTTON_X1], mouseButtons[SDL_BUTTON_X2]);
 	}
 	mouseCoords[0] = 0;
 	mouseCoords[1] = 0;

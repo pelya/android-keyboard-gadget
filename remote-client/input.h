@@ -5,7 +5,7 @@
 
 extern bool keys[SDLK_LAST];
 extern int mouseCoords[2];
-extern bool mouseButtons[SDL_BUTTON_WHEELDOWN+1];
+extern bool mouseButtons[SDL_BUTTON_X2+1];
 
 void openInput();
 void processKeyInput(SDLKey key, int pressed);
