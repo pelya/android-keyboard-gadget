@@ -1,32 +1,3 @@
-From 5199daa72289c311c6d69f1b1c344e41ae8a7caa Mon Sep 17 00:00:00 2001
-From: Pranav Vashi <neobuddy89@gmail.com>
-Date: Mon, 19 May 2014 00:27:36 +0530
-Subject: [PATCH] drivers: usb: Use Android device as USB keyboard/mouse
-
-Adapt to 3.4.y 8974/hammerhead
-Base project: https://github.com/pelya/android-keyboard-gadget
-Required app: https://play.google.com/store/apps/details?id=remote.hid.keyboard.client
-
-Steps:
-* Start ADB Debugging
-* Start app
-* Connect device to system via USB cable
-
-All credits to @pelya for this sweet hack.
-
-Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
----
- drivers/usb/gadget/Makefile                 |  2 +-
- drivers/usb/gadget/android.c                | 45 +++++++++++++++
- drivers/usb/gadget/f_hid.c                  | 85 +++++++++++++++++++++++++++--
- drivers/usb/gadget/f_hid.h                  | 16 ++++++
- drivers/usb/gadget/f_hid_android_keyboard.c | 44 +++++++++++++++
- drivers/usb/gadget/f_hid_android_mouse.c    | 40 ++++++++++++++
- 6 files changed, 227 insertions(+), 5 deletions(-)
- create mode 100644 drivers/usb/gadget/f_hid.h
- create mode 100644 drivers/usb/gadget/f_hid_android_keyboard.c
- create mode 100644 drivers/usb/gadget/f_hid_android_mouse.c
-
 diff --git a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
 index b8f5149..f9a58b3 100644
 --- a/drivers/usb/gadget/Makefile
@@ -104,25 +75,14 @@ index 4c735f5..b9ccc20 100644
  	NULL
  };
  
-@@ -2397,6 +2436,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 	char *name;
- 	char buf[256], *b;
- 	int err;
-+	int hid_enabled;
- 
- 	mutex_lock(&dev->mutex);
- 
-@@ -2443,8 +2483,13 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+@@ -2443,8 +2483,10 @@ functions_store(struct device *pdev, struct device_attribute *attr,
  				if (err)
  					pr_err("android_usb: Cannot enable %s",
  						name);
-+				if (!strcmp(name, "hid"))
-+					hid_enabled = 1;
  			}
  		}
 +		/* HID driver always enabled, it's the whole point of this kernel patch */
-+		if (hid_enabled)
-+			android_enable_function(dev, conf, "hid");
++		android_enable_function(dev, conf, "hid");
  	}
  
  	/* Free uneeded configurations if exists */
@@ -338,7 +298,7 @@ index 0000000..76180eb
 +
 +/* hid descriptor for a keyboard */
 +static struct hidg_func_descriptor ghid_device_android_keyboard = {
-+	.subclass		= 0, /* No subclass */
++	.subclass		= 1, /* Boot Interface Subclass */
 +	.protocol		= 1, /* Keyboard */
 +	.report_length		= 8,
 +	.report_desc_length	= 63,
@@ -388,7 +348,7 @@ index 0000000..8a6ab0a
 +
 +/* HID descriptor for a mouse */
 +static struct hidg_func_descriptor ghid_device_android_mouse = {
-+	.subclass      = 0, /* No subclass */
++	.subclass      = 1, /* Boot Interface Subclass */
 +	.protocol      = 2, /* Mouse */
 +	.report_length = 4,
 +	.report_desc_length	= 52,

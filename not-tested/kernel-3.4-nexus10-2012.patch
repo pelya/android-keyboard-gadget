@@ -308,7 +308,7 @@ index 0000000..76180eb
 +
 +/* hid descriptor for a keyboard */
 +static struct hidg_func_descriptor ghid_device_android_keyboard = {
-+	.subclass		= 0, /* No subclass */
++	.subclass		= 1, /* Boot Interface Subclass */
 +	.protocol		= 1, /* Keyboard */
 +	.report_length		= 8,
 +	.report_desc_length	= 63,
@@ -358,7 +358,7 @@ index 0000000..8a6ab0a
 +
 +/* HID descriptor for a mouse */
 +static struct hidg_func_descriptor ghid_device_android_mouse = {
-+	.subclass      = 0, /* No subclass */
++	.subclass      = 1, /* Boot Interface Subclass */
 +	.protocol      = 2, /* Mouse */
 +	.report_length = 4,
 +	.report_desc_length	= 52,
