@@ -12,7 +12,7 @@ index 581a5ae..6be0aa5 100644
  obj-$(CONFIG_USB_ZERO)		+= g_zero.o
  obj-$(CONFIG_USB_AUDIO)		+= g_audio.o
 diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
-index 4de9562..bbcfb9b 100644
+index 4de9562..b26ea34 100644
 --- a/drivers/usb/gadget/android.c
 +++ b/drivers/usb/gadget/android.c
 @@ -52,6 +52,9 @@
@@ -75,25 +75,12 @@ index 4de9562..bbcfb9b 100644
  	NULL
  };
  
-@@ -957,6 +996,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 	char *name;
- 	char buf[256], *b;
- 	int err;
-+	int hid_enabled;
- 
- 	mutex_lock(&dev->mutex);
- 
-@@ -976,8 +1016,13 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 			err = android_enable_function(dev, name);
- 			if (err)
+@@ -978,6 +1017,8 @@ functions_store(struct device *pdev, struct device_attribute *attr,
  				pr_err("android_usb: Cannot enable '%s'", name);
-+			if (!strcmp(name, "hid"))
-+				hid_enabled = 1;
  		}
  	}
 +	/* HID driver always enabled, it's the whole point of this kernel patch */
-+	if (hid_enabled)
-+		android_enable_function(dev, "hid");
++	android_enable_function(dev, "hid");
  
  	mutex_unlock(&dev->mutex);
  
