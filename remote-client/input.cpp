@@ -11,7 +11,7 @@
 
 bool keys[SDLK_LAST];
 //bool oldkeys[SDLK_LAST];
-int mouseCoords[2];
+float mouseCoords[2];
 bool mouseButtons[SDL_BUTTON_X2+1];
 bool oldmouseButtons[SDL_BUTTON_X2+1];
 
@@ -186,16 +186,17 @@ void processKeyInput(SDLKey key, int pressed)
 
 void processMouseInput()
 {
-	if( mouseCoords[0] != 0 || mouseCoords[1] != 0 ||
+	int coords[2] = { (int)mouseCoords[0], (int)mouseCoords[1] };
+	if( coords[0] != 0 || coords[1] != 0 ||
 		memcmp(oldmouseButtons, mouseButtons, sizeof(mouseButtons)) )
 	{
-		outputSendMouse(mouseCoords[0], mouseCoords[1],
+		outputSendMouse(coords[0], coords[1],
 						mouseButtons[SDL_BUTTON_LEFT], mouseButtons[SDL_BUTTON_RIGHT], mouseButtons[SDL_BUTTON_MIDDLE],
 						(mouseButtons[SDL_BUTTON_WHEELUP] != oldmouseButtons[SDL_BUTTON_WHEELUP] && mouseButtons[SDL_BUTTON_WHEELUP]) ? 1 :
 						(mouseButtons[SDL_BUTTON_WHEELDOWN] != oldmouseButtons[SDL_BUTTON_WHEELDOWN] && mouseButtons[SDL_BUTTON_WHEELDOWN]) ? -1 : 0,
 						mouseButtons[SDL_BUTTON_X1], mouseButtons[SDL_BUTTON_X2]);
+		mouseCoords[0] -= coords[0];
+		mouseCoords[1] -= coords[1];
 	}
-	mouseCoords[0] = 0;
-	mouseCoords[1] = 0;
 	memcpy(oldmouseButtons, mouseButtons, sizeof(mouseButtons));
 }

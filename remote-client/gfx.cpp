@@ -48,7 +48,7 @@ void initSDL()
 	else
 		SDL_SetVideoMode(VID_Y, VID_X, 0, SDL_SWSURFACE);
 	TTF_Init();
-	sFont = TTF_OpenFont("DroidSansMono.ttf", 14);
+	sFont = TTF_OpenFont("DroidSansMono.ttf", TEXT_H);
 	if (!sFont)
 	{
 		printf("Error: cannot open font file, please reinstall the app");

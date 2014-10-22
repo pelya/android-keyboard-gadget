@@ -4,6 +4,7 @@
 #include "gfx.h"
 #include "gui.h"
 #include "input.h"
+#include "touchpad.h"
 
 struct TouchPointer_t touchPointers[MAX_POINTERS];
 static SDL_Surface* sClipboardImage1 = NULL;
@@ -11,6 +12,8 @@ static SDL_Surface* sClipboardImage2 = NULL;
 static SDL_Surface* sKeyboardImage = NULL;
 
 std::vector<GuiElement_t> gui;
+
+enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = VID_X * 0.5, TOUCHPAD_Y1 = VID_Y };
 
 void GuiElement_t::defaultInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
@@ -35,7 +38,12 @@ void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x,
 	SDL_FillRect(SDL_GetVideoSurface(), &r, color);
 	r.y = elem->rect.y + elem->rect.h - 1;
 	SDL_FillRect(SDL_GetVideoSurface(), &r, color);
-	renderStringColor(elem->text.c_str(), elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255);
+	for( int i = 0; i < elem->text.size(); i++ )
+	{
+		renderStringColor(	elem->text[i].c_str(), elem->rect.x + elem->rect.w / 2,
+							elem->rect.y + elem->rect.h / 2 + i * TEXT_H - elem->text.size() * TEXT_H / 2,
+							elem->toggled ? 0 : 255, elem->toggled ? 0 : 255, elem->toggled ? 0 : 255);
+	}
 }
 
 static bool toggleElement(GuiElement_t * elem, bool pressed)
@@ -72,6 +80,12 @@ static void mouseMovementCallback(GuiElement_t * elem, bool pressed, int x, int 
 		mouseCoords[0] = x - elem->x;
 		mouseCoords[1] = y - elem->y;
 	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+}
+
+static void touchpadCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	// Just highlight it
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
@@ -167,6 +181,17 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Up", VID_X * 0.8, 0, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8, VID_Y * 0.1 * 2, VID_X * 0.1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Mouse", VID_X * 0.5, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
+	gui.push_back(GuiElement_t( (const char *[])
+		{
+			"Touchpad",
+			"-",
+			"Swipe to move mouse cursor",
+			"Tap or hold for left mouse click",
+			"Touch with two fingers for right mouse click",
+			"Touch with three fingers for middle mouse click",
+			"Swipe with two fingers for mouse wheel",
+		},
+		TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1, touchpadCallback));
 
 	gui.push_back(GuiElement_t("",      VID_X * 0.500, 0,           VID_X * 0.075, VID_Y * 0.1, keyboardToggleCallback, DrawKeyboardImageCallback));
 	gui.push_back(GuiElement_t("",      VID_X * 0.575, 0,           VID_X * 0.075, VID_Y * 0.1, ProcessClipboardImageCallback, DrawClipboardImageCallback));
@@ -307,24 +332,30 @@ void mainLoop()
 	while( SDL_PollEvent(&evt) )
 	{
 		lastEvent = SDL_GetTicks();
-		if(evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN)
+		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
-			if(evt.key.keysym.sym == SDLK_UNDO)
+			if( evt.key.keysym.sym == SDLK_UNDO )
 				exit(0);
 			processKeyInput(evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
 			//printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
 		}
 		// PC mouse events
-		if(evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN)
+		if( evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN )
 		{
 			// TODO: implement PC input
 			touchPointers[evt.jbutton.button].pressed = (evt.button.state == SDL_PRESSED);
+			/*
+			if( evt.button.state == SDL_PRESSED )
+				touchPointers[evt.jbutton.button].pressedTime = lastEvent;
+			else
+				touchPointers[evt.jbutton.button].releasedTime = lastEvent;
+			*/
 		}
-		if(evt.type == SDL_MOUSEMOTION)
+		if( evt.type == SDL_MOUSEMOTION )
 		{
 			// TODO: implement PC input
-			touchPointers[evt.jbutton.button].x = evt.motion.x;
-			touchPointers[evt.jbutton.button].y = evt.motion.y;
+			touchPointers[0].x = evt.motion.x;
+			touchPointers[0].y = evt.motion.y;
 		}
 		// Android-specific events - accelerometer, multitoush, and on-screen joystick
 		if( evt.type == SDL_JOYAXISMOTION )
@@ -352,6 +383,7 @@ void mainLoop()
 		}
 	}
 
+	processTouchpad(TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1);
 	processGui();
 	processMouseInput();
 

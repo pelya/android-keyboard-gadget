@@ -4,7 +4,7 @@
 #include <SDL/SDL.h>
 
 extern bool keys[SDLK_LAST];
-extern int mouseCoords[2];
+extern float mouseCoords[2];
 extern bool mouseButtons[SDL_BUTTON_X2+1];
 
 void openInput();

@@ -7,7 +7,7 @@
 
 enum { MAX_POINTERS = 8 };
 
-extern struct TouchPointer_t { int x; int y; int pressure; int pressed; } touchPointers[MAX_POINTERS];
+extern struct TouchPointer_t { int x; int y; int pressure; int pressed;} touchPointers[MAX_POINTERS];
 
 struct GuiElement_t;
 
@@ -16,7 +16,7 @@ typedef void (*GuiElementCallback_t) (GuiElement_t * elem, bool pressed, int x, 
 struct GuiElement_t
 {
 	SDL_Rect rect;
-	std::string text;
+	std::vector<std::string> text;
 	GuiElementCallback_t input;
 	GuiElementCallback_t draw;
 	bool toggled; // Default draw function will use that to change element color.
@@ -29,7 +29,22 @@ struct GuiElement_t
 		this->rect.y = y;
 		this->rect.w = w;
 		this->rect.h = h;
-		this->text = text;
+		this->text.push_back(text);
+		this->input = input;
+		this->draw = draw;
+		this->toggled = false;
+		this->x = this->y = 0;
+		this->locked = false;
+	}
+
+	GuiElement_t(const char *[] text, int x = 0, int y = 0, int w = 0, int h = 0, GuiElementCallback_t input = defaultInputCallback, GuiElementCallback_t draw = defaultDrawCallback)
+	{
+		this->rect.x = x;
+		this->rect.y = y;
+		this->rect.w = w;
+		this->rect.h = h;
+		for( int i = 0; text[i]; i++ )
+			this->text.push_back(text[i]);
 		this->input = input;
 		this->draw = draw;
 		this->toggled = false;

@@ -9,7 +9,7 @@
 #define printf(...) __android_log_print(ANDROID_LOG_INFO, "HID keyboard", __VA_ARGS__)
 #endif
 
-enum { VID_X = 640, VID_Y = 480 };
+enum { VID_X = 640, VID_Y = 480, TEXT_H = 14 };
 
 void initSDL();
 void deinitSDL();
