@@ -84,8 +84,8 @@ Then, use hid-gadget-test to send keypresses.
 	# Try to guess what this command sends
 	echo left-ctrl left-alt del | ./hid-gadget-test /dev/hidg0 keyboard
 
-	# Bruteforce 4-digit PIN-code, that's a particularly popular script that people keep asking me for
-	# Executes 42 hours
+	# Bruteforce 4-digit PIN-code, that's a particularly popular script
+	# that people keep asking me for. It executes for 42 hours.
 	for a in 0 1 2 3 4 5 6 7 8 9; do
 	for b in 0 1 2 3 4 5 6 7 8 9; do
 	for c in 0 1 2 3 4 5 6 7 8 9; do
