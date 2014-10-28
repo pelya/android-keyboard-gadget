@@ -45,6 +45,21 @@ Motorola Moto G with Cyanogenmod
 - http://forum.xda-developers.com/showthread.php?t=2634745
 - http://forum.xda-developers.com/showthread.php?t=2786336
 
+OnePlus One
+-----------
+
+- sourceforge.net/projects/namelessrom/files/bacon/ - it's ROM, not just a kernel
+
+Galaxy S4
+---------
+
+- http://forum.xda-developers.com/showthread.php?t=2590246 - you have to enable  in the included STweaks app
+
+Galaxy Note 2
+-------------
+
+- http://forum.xda-developers.com/showthread.php?t=2231374
+
 Other devices
 -------------
 
@@ -192,12 +207,10 @@ Mouse event is an array of 4 bytes, first byte is a bitmask of currently pressed
 		BUTTON_LEFT = 0x1,
 		BUTTON_RIGHT = 0x2,
 		BUTTON_MIDDLE = 0x4,
-		BUTTON_EXTENDED1 = 0x8,
-		BUTTON_EXTENDED2 = 0x10,
 	} MouseButtons_t;
 
 Remaining 3 bytes are X movement offset, Y movement offset, and mouse wheel offset, represented as signed integers.
-Horizontal wheel is not supported yet - buttons BUTTON_EXTENDED1 and BUTTON_EXTENDED2 may act as a horizontal wheel on some OSes.
+Horizontal wheel is not supported yet.
 
 See functions outputSendKeys() and outputSendMouse() inside file [input.cpp](remote-client/input.cpp)
 for reference implementation.
