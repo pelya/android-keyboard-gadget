@@ -18,14 +18,14 @@ struct options {
 };
 
 static struct options kmod[] = {
-	{.opt = "--left-ctrl",		.val = 0x01},
-	{.opt = "--right-ctrl",		.val = 0x10},
-	{.opt = "--left-shift",		.val = 0x02},
-	{.opt = "--right-shift",	.val = 0x20},
-	{.opt = "--left-alt",		.val = 0x04},
-	{.opt = "--right-alt",		.val = 0x40},
-	{.opt = "--left-meta",		.val = 0x08},
-	{.opt = "--right-meta",		.val = 0x80},
+	{.opt = "left-ctrl",		.val = 0x01},
+	{.opt = "right-ctrl",		.val = 0x10},
+	{.opt = "left-shift",		.val = 0x02},
+	{.opt = "right-shift",		.val = 0x20},
+	{.opt = "left-alt",			.val = 0x04},
+	{.opt = "right-alt",		.val = 0x40},
+	{.opt = "left-meta",		.val = 0x08},
+	{.opt = "right-meta",		.val = 0x80},
 	{.opt = NULL}
 };
 
