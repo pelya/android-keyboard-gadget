@@ -60,6 +60,11 @@ Galaxy Note 2
 
 - http://forum.xda-developers.com/showthread.php?t=2231374
 
+Huawei Ideox X5
+---------------
+
+- http://forum.xda-developers.com/showthread.php?t=2616956
+
 Other devices
 -------------
 
