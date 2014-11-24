@@ -47,6 +47,7 @@ static int runSu()
 		// Redirect both stdin and stdout
 		dup2(pipe[1], 0);
 		dup2(pipe[1], 1);
+		// We don't care about stderr
 		// Terminate when stdin closes
 		signal(SIGPIPE, SIG_DFL);
 		execlp("su", "su", NULL);
@@ -87,20 +88,23 @@ static void openDevicesSuperuser()
 	if (keyboardFd == -1)
 		return;
 
-	sprintf(cmd, "echo Opened..... ; cat %s & cat > %s\n", DEV_KEYBOARD, DEV_KEYBOARD);
+	sprintf(cmd, "ls %s && { cat %s & cat > %s ; } || echo Cannot open device ...... \n", DEV_KEYBOARD, DEV_KEYBOARD, DEV_KEYBOARD);
 	write(keyboardFd, cmd, strlen(cmd));
-	count = read(keyboardFd, cmd, 10);
-	if (count < 0 || strstr(cmd, "Opened") == NULL)
+	count = read(keyboardFd, cmd, 11);
+	cmd[11] = 0;
+	printf("openDevicesSuperuser(): su returned: %s", cmd);
+	if (count < 0 || strstr(cmd, DEV_KEYBOARD) == NULL)
 		goto errorKb;
 
 	mouseFd = runSu();
 	if (mouseFd == -1)
 		goto errorKb;
 
-	sprintf(cmd, "echo Opened..... ; cat %s & cat > %s\n", DEV_MOUSE, DEV_MOUSE);
+	sprintf(cmd, "ls %s && { cat %s & cat > %s ; } || echo Cannot open device ...... \n", DEV_MOUSE, DEV_MOUSE, DEV_MOUSE);
 	write(mouseFd, cmd, strlen(cmd));
-	count = read(mouseFd, cmd, 10);
-	if (count < 0 || strstr(cmd, "Opened") == NULL)
+	count = read(mouseFd, cmd, 11);
+	cmd[11] = 0;
+	if (count < 0 || strstr(cmd, DEV_MOUSE) == NULL)
 		goto errorMouse;
 
 	return;

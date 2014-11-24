@@ -21,17 +21,18 @@ static struct supportedDevices_t
 supportedDevices[] =
 {
 	{
-		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0 ]",
-		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/master/nexus7-2012-wifi-grouper/boot.img?raw=true'",
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0 ] && echo Matched",
+		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/master/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
 		"echo '097fd8bea1faf7f8f8a32025f37e219e58cd4aa1  boot.img' | $APPDIR/busybox sha1sum -c",
-		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX\" | su",
+		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX && echo Successful\" | su",
 		"rm boot.img"
 	},
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
-static int executeCommand(const char * cmd)
+static int executeCommand(const char * cmd, const char *search)
 {
+	int success = 0;
 	printf("executeCommand > %s", cmd);
 	char buf[512] = "";
 	FILE *ff = popen(cmd, "r");
@@ -40,10 +41,11 @@ static int executeCommand(const char * cmd)
 		printf("executeCommand >> %s", buf);
 		addDialogText(buf);
 		mainLoop(true);
+		if (strstr(buf, search) != NULL)
+			success = 1;
 	}
-	if( pclose(ff) != 0 )
-		return 0;
-	return 1;
+	pclose(ff);
+	return success;
 }
 
 static int flashCustomKernelDialog(struct supportedDevices_t & dev)
@@ -68,19 +70,19 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 	createDialog();
 	addDialogText("Downloading package...");
 	mainLoop(true);
-	if( !executeCommand(dev.download) )
+	if( !executeCommand(dev.download, "Successful") )
 		showErrorMessage("Cannot download kernel, please check your network connectivity");
 
 	addDialogText("Validating package...");
 	mainLoop(true);
-	if( !executeCommand(dev.checksum) )
+	if( !executeCommand(dev.checksum, "boot.img: OK") )
 		showErrorMessage("Downloaded package was corrupted, please re-download it");
 
 	createDialog();
 	addDialogText("Custom kernel will be flashed to your device.");
 	addDialogText("This kernel is EXPERIMENTAL, and comes WTIH NO WARRANTY.");
 	addDialogText("Your device may become unstable, and reboot at random.");
-	addDialogText("Please root your device again after flashing this kernel.");
+	addDialogText("You will lose root, please root your device again.");
 	addDialogText("");
 	addDialogText("Do you wish to flash custom kernel to your device?");
 	addDialogYesNoButtons();
@@ -90,8 +92,8 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 	if( result == 0 )
 		exit(0);
 
-	result = executeCommand(dev.flash);
-	executeCommand(dev.clear_tmp);
+	result = executeCommand(dev.flash, "Successful");
+	executeCommand(dev.clear_tmp, "-");
 	if( result )
 		showErrorMessage("Flashing kernel succeeded.\nPlease restart your device now.");
 	else
@@ -104,7 +106,7 @@ int flashCustomKernel()
 {
 	int d;
 	for( d = 0; supportedDevices[d].device; d++ )
-		if( executeCommand(supportedDevices[d].device) )
+		if( executeCommand(supportedDevices[d].device, "Matched") )
 			return flashCustomKernelDialog(supportedDevices[d]);
 
 	createDialog();
