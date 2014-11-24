@@ -1,8 +1,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
 #include "gfx.h"
 #include "gui.h"
 #include "input.h"
@@ -24,31 +28,91 @@ static const char *DEV_KEYBOARD = "/dev/hidg0";
 static const char *DEV_MOUSE = "/dev/hidg1";
 static const char *DEV_CHECK_REPLUGGED = "/sys/devices/virtual/hidg/hidg0";
 
+static int runSu()
+{
+	int pipe[2];
+	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, pipe) != 0)
+	{
+		printf("%s: socketpair() failed: %s", __func__, strerror(errno));
+		return -1;
+	}
+	// Child will auto-free process table when terminated
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
+
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		close(pipe[0]);
+		// Redirect both stdin and stdout
+		dup2(pipe[1], 0);
+		dup2(pipe[1], 1);
+		// Terminate when stdin closes
+		signal(SIGPIPE, SIG_DFL);
+		execlp("su", "su", NULL);
+		exit(1);
+	}
+	close(pipe[1]);
+	return pipe[0];
+}
+
 static void openDevices()
 {
-	printf("openDevices() %s %s", DEV_KEYBOARD, DEV_MOUSE);
+	//printf("openDevices() %s %s", DEV_KEYBOARD, DEV_MOUSE);
 
 	if (keyboardFd != -1)
 		close(keyboardFd);
 	if (mouseFd != -1)
 		close(mouseFd);
+
 	keyboardFd = open(DEV_KEYBOARD, O_RDWR, 0666);
 	mouseFd = open(DEV_MOUSE, O_RDWR, 0666);
 }
 
-/*
-static void closeDevices()
+static void openDevicesSuperuser()
 {
-	printf("closeDevices() %s %s", DEV_KEYBOARD, DEV_MOUSE);
+	char cmd[256];
+	int count;
+	//printf("openDevicesSuperuser() %s %s", DEV_KEYBOARD, DEV_MOUSE);
 
 	if (keyboardFd != -1)
 		close(keyboardFd);
 	if (mouseFd != -1)
 		close(mouseFd);
+
 	keyboardFd = -1;
 	mouseFd = -1;
+
+	keyboardFd = runSu();
+	if (keyboardFd == -1)
+		return;
+
+	sprintf(cmd, "echo Opened..... ; cat %s & cat > %s\n", DEV_KEYBOARD, DEV_KEYBOARD);
+	write(keyboardFd, cmd, strlen(cmd));
+	count = read(keyboardFd, cmd, 10);
+	if (count < 0 || strstr(cmd, "Opened") == NULL)
+		goto errorKb;
+
+	mouseFd = runSu();
+	if (mouseFd == -1)
+		goto errorKb;
+
+	sprintf(cmd, "echo Opened..... ; cat %s & cat > %s\n", DEV_MOUSE, DEV_MOUSE);
+	write(mouseFd, cmd, strlen(cmd));
+	count = read(mouseFd, cmd, 10);
+	if (count < 0 || strstr(cmd, "Opened") == NULL)
+		goto errorMouse;
+
+	return;
+
+	errorMouse:
+	close(mouseFd);
+	mouseFd = -1;
+
+	errorKb:
+	close(keyboardFd);
+	keyboardFd = -1;
 }
-*/
 
 static int devicesExist()
 {
@@ -58,26 +122,13 @@ static int devicesExist()
 	return 0;
 }
 
-static void changeDevicePermissions()
-{
-	char cmd[256];
-	printf("%s: $USER=%d", __func__, getuid());
-	sprintf(cmd, "echo chown %d %s %s | su", getuid(), DEV_KEYBOARD, DEV_MOUSE);
-	printf("%s: %s", __func__, cmd);
-	system(cmd);
-	sprintf(cmd, "echo chmod 600 %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
-	printf("%s: %s", __func__, cmd);
-	system(cmd);
-}
-
 void openInput()
 {
 	openDevices();
-	if( devicesExist() && (keyboardFd == -1 || mouseFd == -1) )
+	if( keyboardFd == -1 || mouseFd == -1 )
 	{
-		changeDevicePermissions();
-		openDevices();
-		if( keyboardFd == -1 || mouseFd == -1 )
+		openDevicesSuperuser();
+		if( devicesExist() && (keyboardFd == -1 || mouseFd == -1) )
 		{
 			char cmd[256];
 			createDialog();
@@ -87,6 +138,8 @@ void openInput()
 			addDialogText("");
 			sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
 			addDialogText(cmd);
+			addDialogText("");
+			addDialogText("If you have Android 5.0 - disable SELinux.");
 			addDialogText("");
 			addDialogText("Press Back to exit");
 			while( true )
@@ -120,11 +173,6 @@ static void checkDeviceReplugged()
 	if (st.st_mtime != last_mtime || st.st_mtime_nsec != last_mtime_nsec)
 	{
 		openInput();
-		/*
-		closeDevices();
-		sleep(1);
-		openDevices();
-		*/
 	}
 	last_mtime = st.st_mtime;
 	last_mtime_nsec = st.st_mtime_nsec;

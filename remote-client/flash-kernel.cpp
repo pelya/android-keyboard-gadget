@@ -21,9 +21,9 @@ static struct supportedDevices_t
 supportedDevices[] =
 {
 	{
-		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 4.4.4 ]",
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0 ]",
 		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/master/nexus7-2012-wifi-grouper/boot.img?raw=true'",
-		"echo '1b57049e0823f632f8c69bbde8f9dd632cad7e7b  boot.img' | $APPDIR/busybox sha1sum -c",
+		"echo '097fd8bea1faf7f8f8a32025f37e219e58cd4aa1  boot.img' | $APPDIR/busybox sha1sum -c",
 		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX\" | su",
 		"rm boot.img"
 	},
@@ -80,6 +80,7 @@ static int flashCustomKernelDialog(struct supportedDevices_t & dev)
 	addDialogText("Custom kernel will be flashed to your device.");
 	addDialogText("This kernel is EXPERIMENTAL, and comes WTIH NO WARRANTY.");
 	addDialogText("Your device may become unstable, and reboot at random.");
+	addDialogText("Please root your device again after flashing this kernel.");
 	addDialogText("");
 	addDialogText("Do you wish to flash custom kernel to your device?");
 	addDialogYesNoButtons();
