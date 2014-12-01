@@ -70,16 +70,20 @@ void processTouchpad(int bounds_x0, int bounds_y0, int bounds_x1, int bounds_y1)
 		stopLeftClick = 1;
 	}
 
-	if (!touchPointers[1].pressed && oldTouchPointers[1].pressed && !stopRightClick)
+	if (!touchPointers[1].pressed && oldTouchPointers[1].pressed)
 	{
 		//printf("Right click");
-		stopLeftClick = 1;
-		pressedX = touchPointers[0].x;
-		pressedY = touchPointers[0].y;
-		mouseButtons[SDL_BUTTON_LEFT] = 0;
-		mouseButtons[SDL_BUTTON_RIGHT] = 1;
-		processMouseInput();
-		mouseButtons[SDL_BUTTON_RIGHT] = 0;
+		if (!stopRightClick)
+		{
+			stopLeftClick = 1;
+			pressedX = touchPointers[0].x;
+			pressedY = touchPointers[0].y;
+			mouseButtons[SDL_BUTTON_LEFT] = 0;
+			mouseButtons[SDL_BUTTON_RIGHT] = 1;
+			processMouseInput();
+			mouseButtons[SDL_BUTTON_RIGHT] = 0;
+		}
+		stopRightClick = 0;
 	}
 
 	if (touchPointers[2].pressed && !mouseButtons[SDL_BUTTON_MIDDLE])
