@@ -98,6 +98,12 @@ void processTouchpad(int bounds_x0, int bounds_y0, int bounds_x1, int bounds_y1)
 		mouseButtons[SDL_BUTTON_MIDDLE] = 0;
 	}
 
+	if (touchPointers[1].pressed && !oldTouchPointers[1].pressed)
+	{
+		pressedX = touchPointers[0].x;
+		pressedY = touchPointers[0].y;
+	}
+
 	if (touchPointers[1].pressed && (abs(pressedX - touchPointers[0].x) > WHEEL_THRESHOLD || abs(pressedY - touchPointers[0].y) > WHEEL_THRESHOLD))
 	{
 		stopLeftClick = 1;
