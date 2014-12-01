@@ -118,6 +118,18 @@ static void openDevicesSuperuser()
 	keyboardFd = -1;
 }
 
+static void changeDevicePermissions()
+{
+	char cmd[256];
+	printf("%s: $USER=%d", __func__, getuid());
+	sprintf(cmd, "echo chown %d %s %s | su", getuid(), DEV_KEYBOARD, DEV_MOUSE);
+	printf("%s: %s", __func__, cmd);
+	system(cmd);
+	sprintf(cmd, "echo chmod 600 %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
+	printf("%s: %s", __func__, cmd);
+	system(cmd);
+}
+
 static int devicesExist()
 {
 	struct stat st;
@@ -131,25 +143,30 @@ void openInput()
 	openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
 	{
+		changeDevicePermissions();
+		openDevices();
+	}
+	if( keyboardFd == -1 || mouseFd == -1 )
+	{
 		openDevicesSuperuser();
-		if( devicesExist() && (keyboardFd == -1 || mouseFd == -1) )
-		{
-			char cmd[256];
-			createDialog();
-			addDialogText("Your kernel is supported by this app");
-			addDialogText("But your system is not rooted - cannot open device files");
-			addDialogText("Please execute following command from the root shell, and restart this app:");
-			addDialogText("");
-			sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
-			addDialogText(cmd);
-			addDialogText("");
-			addDialogText("If you have Android 5.0 - disable SELinux.");
-			addDialogText("");
-			addDialogText("Press Back to exit");
-			while( true )
-				mainLoop();
-			exit(0);
-		}
+	}
+	if( (keyboardFd == -1 || mouseFd == -1) && devicesExist() )
+	{
+		char cmd[256];
+		createDialog();
+		addDialogText("Your kernel is supported by this app");
+		addDialogText("But your system is not rooted - cannot open device files");
+		addDialogText("Please execute following command from the root shell, and restart this app:");
+		addDialogText("");
+		sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
+		addDialogText(cmd);
+		addDialogText("");
+		addDialogText("If you have Android 5.0 - disable SELinux.");
+		addDialogText("");
+		addDialogText("Press Back to exit");
+		while( true )
+			mainLoop();
+		exit(0);
 	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 		flashCustomKernel();
