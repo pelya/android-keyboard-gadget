@@ -10,10 +10,17 @@ struct TouchPointer_t touchPointers[MAX_POINTERS];
 static SDL_Surface* sClipboardImage1 = NULL;
 static SDL_Surface* sClipboardImage2 = NULL;
 static SDL_Surface* sKeyboardImage = NULL;
+static float mouseSpeed = 1.0f;
+static const char * mouseSpeedSaveFile = "mouse-speed.cfg";
 
 std::vector<GuiElement_t> gui;
 
 enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = int(VID_X * 0.6), TOUCHPAD_Y1 = VID_Y };
+
+float getMouseSpeed()
+{
+	return mouseSpeed;
+}
 
 void GuiElement_t::defaultInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
@@ -82,9 +89,44 @@ static void mouseMovementCallback(GuiElement_t * elem, bool pressed, int x, int 
 {
 	if( elem->toggled && pressed )
 	{
-		mouseCoords[0] += x - elem->x;
-		mouseCoords[1] += y - elem->y;
+		mouseCoords[0] += (x - elem->x) * mouseSpeed;
+		mouseCoords[1] += (y - elem->y) * mouseSpeed;
 	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+}
+
+static void mouseSpeedCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	static bool oldPressed = 0;
+	static int guiMouseSpeedX = 0;
+	char s[128];
+
+	if( pressed )
+	{
+		if( !oldPressed )
+			guiMouseSpeedX = x;
+		mouseSpeed += (x - guiMouseSpeedX) / 300.0f;
+		guiMouseSpeedX = x;
+		sprintf(s, "Mouse speed %4.2f - swipe", mouseSpeed);
+		elem->text[0] = s;
+		oldPressed = true;
+	}
+	else
+	{
+		if( oldPressed )
+		{
+			FILE * ff = fopen(mouseSpeedSaveFile, "w");
+			if( ff )
+			{
+				fprintf(ff, "%f", mouseSpeed);
+				fclose(ff);
+				sprintf(s, "Mouse speed %4.2f", mouseSpeed);
+				elem->text[0] = s;
+			}
+		}
+		oldPressed = false;
+	}
+
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
@@ -185,7 +227,8 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Mid",  VID_X * 0.8 + VID_X * 0.2 / 3,     VID_Y * 0.1, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8 + VID_X * 0.2 / 3, VID_Y * 0.1 * 2, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
-	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.7, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.6, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Swipe to change mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.5, VID_Y * 0.1, mouseSpeedCallback));
 	gui.push_back(GuiElement_t( (const char *[])
 		{
 			"Touchpad",
@@ -214,6 +257,14 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Shift", VID_X * 0.6, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
 	gui.push_back(GuiElement_t("Meta",  VID_X * 0.7, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
 
+	FILE * ff = fopen(mouseSpeedSaveFile, "r");
+	if( ff )
+	{
+		char s[128] = "1.0";
+		fgets(s, sizeof(s) - 1, ff);
+		fclose(ff);
+		mouseSpeed = atof(s);
+	}
 	//SDL_ShowScreenKeyboard(NULL);
 }
 

@@ -54,8 +54,8 @@ void processTouchpad(int bounds_x0, int bounds_y0, int bounds_x1, int bounds_y1)
 		oldTouchPointers[0].y = pressedY;
 	}
 
-	mouseCoords[0] += touchPointers[0].x - oldTouchPointers[0].x;
-	mouseCoords[1] += touchPointers[0].y - oldTouchPointers[0].y;
+	mouseCoords[0] += (touchPointers[0].x - oldTouchPointers[0].x) * getMouseSpeed();
+	mouseCoords[1] += (touchPointers[0].y - oldTouchPointers[0].y) * getMouseSpeed();
 
 	if (!mouseButtons[SDL_BUTTON_LEFT] && curTime >= pressedTime + LEFT_CLICK_TIMEOUT && !stopLeftClick)
 	{

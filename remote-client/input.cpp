@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <errno.h>
 #include <signal.h>
 #include "gfx.h"
@@ -256,9 +257,9 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel, int
 	event[0] |= b3 ? 4 : 0;
 	event[0] |= b6 ? 32 : 0;
 	event[0] |= b7 ? 64 : 0;
-	event[1] = x;
-	event[2] = y;
-	event[3] = wheel >= 0 ? wheel : 256 + wheel;
+	event[1] = (x > SCHAR_MAX) ? SCHAR_MAX : (x < SCHAR_MIN + 1) ? SCHAR_MIN + 1 : x;
+	event[2] = (y > SCHAR_MAX) ? SCHAR_MAX : (y < SCHAR_MIN + 1) ? SCHAR_MIN + 1 : y;
+	event[3] = (wheel >= 0) ? wheel : UCHAR_MAX + 1 + wheel;
 	if( write(mouseFd, event, sizeof(event)) != sizeof(event))
 	{
 		close(keyboardFd);

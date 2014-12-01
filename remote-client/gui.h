@@ -57,6 +57,7 @@ struct GuiElement_t
 };
 
 extern std::vector<GuiElement_t> gui;
+float getMouseSpeed();
 
 void createGuiMain();
 void processGui();
