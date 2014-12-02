@@ -53,7 +53,7 @@ Motorola Moto E with Cyanogenmod
 OnePlus One
 -----------
 
-- sourceforge.net/projects/namelessrom/files/bacon/ - it's ROM, not just a kernel
+- http://sourceforge.net/projects/namelessrom/files/bacon/ - it's ROM, not just a kernel
 
 Galaxy S4
 ---------
