@@ -45,6 +45,11 @@ Motorola Moto G with Cyanogenmod
 - http://forum.xda-developers.com/showthread.php?t=2634745
 - http://forum.xda-developers.com/showthread.php?t=2786336
 
+Motorola Moto E with Cyanogenmod
+--------------------------------
+
+- http://forum.xda-developers.com/showthread.php?t=2931985
+
 OnePlus One
 -----------
 
@@ -60,7 +65,7 @@ Galaxy Note 2
 
 - http://forum.xda-developers.com/showthread.php?t=2231374
 
-Huawei Ideox X5
+Huawei Ideos X5
 ---------------
 
 - http://forum.xda-developers.com/showthread.php?t=2616956

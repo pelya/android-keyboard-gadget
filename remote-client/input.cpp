@@ -159,7 +159,7 @@ void openInput()
 	{
 		openDevicesSuperuser();
 	}
-   if( (keyboardFd == -1 || mouseFd == -1) )
+	if( (keyboardFd == -1 || mouseFd == -1) )
 	{
 		char cmd[256];
 		createDialog();
