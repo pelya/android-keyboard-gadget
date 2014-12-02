@@ -131,16 +131,24 @@ static void changeDevicePermissions()
 	system(cmd);
 }
 
-static int devicesExist()
+static int deviceExist(const char *path)
 {
 	struct stat st;
-	if (stat(DEV_KEYBOARD, &st) == 0 && stat(DEV_MOUSE, &st) == 0)
-		return 1;
-	return 0;
+
+	/*
+	** On Lollipop, we don't have permission to stat a device; but we know
+	** it exists because errno is set to EACCES, and not ENOENT.
+	*/
+	return 0 == stat(path, &st) || EACCES == errno;
 }
 
 void openInput()
 {
+	if( !deviceExist(DEV_KEYBOARD) || !deviceExist(DEV_MOUSE) )
+	{
+		flashCustomKernel();
+		return;
+	}
 	openDevices();
 	if( keyboardFd == -1 || mouseFd == -1 )
 	{
@@ -151,7 +159,7 @@ void openInput()
 	{
 		openDevicesSuperuser();
 	}
-	if( (keyboardFd == -1 || mouseFd == -1) && devicesExist() )
+   if( (keyboardFd == -1 || mouseFd == -1) )
 	{
 		char cmd[256];
 		createDialog();
