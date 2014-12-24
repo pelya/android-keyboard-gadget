@@ -28,6 +28,7 @@ Nexus 5
 
 - http://forum.xda-developers.com/showthread.php?t=2551441
 - http://forum.xda-developers.com/showthread.php?t=2527130
+- [Boot image for Android 5.0](nexus5-hammerhead-android-5.0)
 
 Nexus 4
 -------
