@@ -71,6 +71,11 @@ Huawei Ideos X5
 
 - http://forum.xda-developers.com/showthread.php?t=2616956
 
+Sony Xperia Z3 and Z3 Compact
+-----------------------------
+
+- http://forum.xda-developers.com/showthread.php?t=2937173
+
 Other devices
 -------------
 
