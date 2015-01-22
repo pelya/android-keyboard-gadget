@@ -76,6 +76,11 @@ Sony Xperia Z3 and Z3 Compact
 
 - http://forum.xda-developers.com/showthread.php?t=2937173
 
+Sony Xperia Z Ultra
+-------------------
+
+- http://forum.xda-developers.com/showthread.php?t=2926584
+
 Other devices
 -------------
 
