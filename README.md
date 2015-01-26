@@ -134,6 +134,15 @@ Then, use hid-gadget-test to send keypresses.
 	done
 	done
 
+	# Press right mouse button
+	echo --b2 | ./hid-gadget-test /dev/hidg1 mouse
+
+	# Hold left mouse button, drag 100 pixels to the right and 50 pixels up, then release
+	echo --hold --b1 | ./hid-gadget-test /dev/hidg1 mouse
+	echo --hold --b1 100 0 | ./hid-gadget-test /dev/hidg1 mouse
+	echo --hold --b1 0 -50 | ./hid-gadget-test /dev/hidg1 mouse
+	echo --b1 | ./hid-gadget-test /dev/hidg1 mouse
+
 Here is [the list of keys that this utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
 
 If you need to crack a PIN code, but the target system loses keypresses (happens in MacOS BIOS),
