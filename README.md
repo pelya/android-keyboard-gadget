@@ -170,10 +170,9 @@ Compilation
 
 You have to run all following commands on Linux. Windows is not supported.
 
-To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ ,
-go to http://github.com/ and create an account there, and launch commands
+To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ , and launch commands
 
-	git clone git@github.com:pelya/commandergenius.git
+	git clone https://github.com/pelya/commandergenius.git
 	cd commandergenius
 	git submodule update --init --recursive
 	rm -f project/jni/application/src
