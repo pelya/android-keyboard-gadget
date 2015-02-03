@@ -170,7 +170,6 @@ void openInput()
 		sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
 		addDialogText(cmd);
 		addDialogText("");
-		addDialogText("If you have Android 5.0 - disable SELinux.");
 		addDialogText("");
 		addDialogText("Press Back to exit");
 		while( true )

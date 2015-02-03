@@ -21,14 +21,14 @@ static struct supportedDevices_t
 supportedDevices[] =
 {
 	{
-		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0 ] && echo Matched",
-		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/master/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
-		"echo '097fd8bea1faf7f8f8a32025f37e219e58cd4aa1  boot.img' | $APPDIR/busybox sha1sum -c",
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0.2 ] && echo Matched || $APPDIR/busybox [ \"`getprop ro.product.device`\" = nakasi -a \"`getprop ro.build.version.release`\" = 5.0.2 ] && echo Matched",
+		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/e44670bdcbc8d6a6939e083fcefec067f11094a8/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
+		"echo 'bb164ba3a76a6d2921414414a26c0498b7ce29de  boot.img' | $APPDIR/busybox sha1sum -c",
 		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX && echo Successful\" | su",
 		"rm boot.img"
 	},
 	{
-		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 4.4.4 ] && echo Matched",
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 4.4.4 ] && echo Matched || $APPDIR/busybox [ \"`getprop ro.product.device`\" = nakasi -a \"`getprop ro.build.version.release`\" = 4.4.4 ] && echo Matched",
 		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/bfcefabcd60829866c23ad03ea43fd3166462468/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
 		"echo '1b57049e0823f632f8c69bbde8f9dd632cad7e7b  boot.img' | $APPDIR/busybox sha1sum -c",
 		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX && echo Successful\" | su",
@@ -118,10 +118,10 @@ int flashCustomKernel()
 
 	createDialog();
 	addDialogText("You will need a custom kernel to use this app.");
-	addDialogText("Prebuilt kernel is available only for Nexus 7 2012 WiFi.");
+	addDialogText("Prebuilt kernel is available only for Nexus 7 2012 WiFi");
+	addDialogText("with Android 4.4.4 or 5.0.2.");
 	addDialogText("You will need to compile and install the kernel yourself for other devices.");
 	addDialogText("Compilation instructions are available here:");
-	addDialogText("");
 	addDialogText("");
 	addDialogUrlButton("https://github.com/pelya/android-keyboard-gadget");
 	while( true )
