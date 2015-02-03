@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2015 Sergii Pylypenko
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <string.h>
 #include <SDL/SDL_image.h>
 
@@ -229,26 +245,26 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
 	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.6, mouseMovementCallback));
 	gui.push_back(GuiElement_t("Swipe to change mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.5, VID_Y * 0.1, mouseSpeedCallback));
-	gui.push_back(GuiElement_t( (const char *[])
-		{
-			"Touchpad",
-			"",
-			"Swipe to move mouse cursor",
-			"",
-			"Tap or hold for left mouse click",
-			"to send left mouse click",
-			"",
-			"Touch with two fingers",
-			"to send right mouse click",
-			"",
-			"Touch with three fingers",
-			"to send middle mouse click",
-			"",
-			"Swipe with two fingers",
-			"to scroll mouse wheel",
-			NULL
-		},
-		TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1, touchpadCallback));
+	const char *TOUCHPAD_TEXT[] =
+	{
+		"Touchpad",
+		"",
+		"Swipe to move mouse cursor",
+		"",
+		"Tap or hold for left mouse click",
+		"to send left mouse click",
+		"",
+		"Touch with two fingers",
+		"to send right mouse click",
+		"",
+		"Touch with three fingers",
+		"to send middle mouse click",
+		"",
+		"Swipe with two fingers",
+		"to scroll mouse wheel",
+		NULL
+	};
+	gui.push_back(GuiElement_t(TOUCHPAD_TEXT, TOUCHPAD_X0, TOUCHPAD_Y0, TOUCHPAD_X1, TOUCHPAD_Y1, touchpadCallback));
 
 	gui.push_back(GuiElement_t("",      VID_X * 0.6, 0,           VID_X * 0.1, VID_Y * 0.1, keyboardToggleCallback, DrawKeyboardImageCallback));
 	gui.push_back(GuiElement_t("",      VID_X * 0.7, 0,           VID_X * 0.1, VID_Y * 0.1, ProcessClipboardImageCallback, DrawClipboardImageCallback));
