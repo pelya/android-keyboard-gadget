@@ -36,8 +36,9 @@ struct GuiElement_t
 	GuiElementCallback_t input;
 	GuiElementCallback_t draw;
 	bool toggled; // Default draw function will use that to change element color.
-	int x, y; // Internal state to use by callbacks.
-	bool locked; // Internal state to use by callbacks.
+	int x, y; // Last input coordinates.
+	bool locked; // For use as a toggle-button.
+	int data; // Internal state to use by callbacks.
 
 	GuiElement_t(const char * text = "", int x = 0, int y = 0, int w = 0, int h = 0, GuiElementCallback_t input = defaultInputCallback, GuiElementCallback_t draw = defaultDrawCallback)
 	{
@@ -70,9 +71,12 @@ struct GuiElement_t
 
 	static void defaultInputCallback(GuiElement_t * elem, bool pressed, int x, int y);
 	static void defaultDrawCallback(GuiElement_t * elem, bool pressed, int x, int y);
+	static bool toggleElement(GuiElement_t * elem, bool pressed);
 };
 
-extern std::vector<GuiElement_t> gui;
+extern std::vector<GuiElement_t> settingsGui;
+extern bool guiWaitTouchRelease;
+
 float getMouseSpeed();
 
 void createGuiMain();
@@ -85,5 +89,10 @@ void addDialogText(const char *text);
 void clearDialogText();
 void addDialogUrlButton(const char *url);
 void addDialogYesNoButtons();
+
+void settingsInitGui();
+void settingsCloseGui();
+void settingsProcessKeyInput(SDLKey key, unsigned int unicode, int pressed);
+void settingsDefineKeycode(SDLKey key, unsigned int unicode);
 
 #endif

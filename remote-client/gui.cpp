@@ -21,15 +21,21 @@
 #include "gui.h"
 #include "input.h"
 #include "touchpad.h"
+#include "tools.h"
+
 
 struct TouchPointer_t touchPointers[MAX_POINTERS];
+bool guiWaitTouchRelease = false;
+
 static SDL_Surface* sClipboardImage1 = NULL;
 static SDL_Surface* sClipboardImage2 = NULL;
 static SDL_Surface* sKeyboardImage = NULL;
+static SDL_Surface* sSettingsImage = NULL;
 static float mouseSpeed = 1.0f;
 static const char * mouseSpeedSaveFile = "mouse-speed.cfg";
+static bool sInsideSettings = false;
 
-std::vector<GuiElement_t> gui;
+static std::vector<GuiElement_t> gui;
 
 enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = int(VID_X * 0.6), TOUCHPAD_Y1 = VID_Y };
 
@@ -69,7 +75,7 @@ void GuiElement_t::defaultDrawCallback(GuiElement_t * elem, bool pressed, int x,
 	}
 }
 
-static bool toggleElement(GuiElement_t * elem, bool pressed)
+bool GuiElement_t::toggleElement(GuiElement_t * elem, bool pressed)
 {
 	if( !pressed )
 		elem->locked = false;
@@ -82,11 +88,16 @@ static bool toggleElement(GuiElement_t * elem, bool pressed)
 	return false;
 }
 
+static bool toggleElement(GuiElement_t * elem, bool pressed)
+{
+	return GuiElement_t::toggleElement(elem, pressed);
+}
+
 template<SDLKey key>
 static void keyInputCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
 	if( toggleElement(elem, pressed) )
-		processKeyInput(key, elem->toggled || SDL_GetKeyState(NULL)[key]);
+		processKeyInput(key, 0, elem->toggled || SDL_GetKeyState(NULL)[key]);
 }
 
 template<int button>
@@ -123,7 +134,7 @@ static void mouseSpeedCallback(GuiElement_t * elem, bool pressed, int x, int y)
 			guiMouseSpeedX = x;
 		mouseSpeed += (x - guiMouseSpeedX) / 300.0f;
 		guiMouseSpeedX = x;
-		sprintf(s, "Mouse speed %4.2f - swipe", mouseSpeed);
+		sprintf(s, "Speed %4.2f - swipe", mouseSpeed);
 		elem->text[0] = s;
 		oldPressed = true;
 	}
@@ -156,8 +167,17 @@ static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 {
 	if( toggleElement(elem, pressed) )
 	{
-		//printf( "Show screen keyboard: %d", elem->toggled);
 		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+}
+
+static void settingsToggleCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	if( toggleElement(elem, pressed) )
+	{
+		sInsideSettings = true;
+		settingsInitGui();
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
@@ -174,7 +194,13 @@ static void DrawClipboardImageCallback(GuiElement_t * elem, bool pressed, int x,
 	drawImageCentered(elem->toggled ? sClipboardImage2 : sClipboardImage1, elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2);
 }
 
-static int checkShiftRequired( int *sym )
+static void DrawSettingsImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	GuiElement_t::defaultDrawCallback(elem, pressed, x, y);
+	drawImageCentered(sSettingsImage, elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2);
+}
+
+static int checkShiftRequired( unsigned int *sym )
 {
 	switch( *sym )
 	{
@@ -210,19 +236,19 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 	{
 		char buf[1024];
 		SDL_ANDROID_GetClipboardText(buf, sizeof(buf));
-		for( int i = 0; buf[i]; i++ )
+		const char *pos = buf;
+		for( unsigned int key = UnicodeFromUtf8(&pos); key != 0; key = UnicodeFromUtf8(&pos) )
 		{
-			int key = buf[i];
 			int shiftRequired = checkShiftRequired(&key);
 
 			if( shiftRequired )
-				processKeyInput(SDLK_LSHIFT, 1);
+				processKeyInput(SDLK_LSHIFT, 0, 1);
 
-			processKeyInput((SDLKey)key, 1);
-			processKeyInput((SDLKey)key, 0);
+			processKeyInput((SDLKey)key, 0, 1);
+			processKeyInput((SDLKey)key, 0, 0);
 
 			if( shiftRequired )
-				processKeyInput(SDLK_LSHIFT, 0);
+				processKeyInput(SDLK_LSHIFT, 0, 0);
 		}
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
@@ -236,15 +262,20 @@ void createGuiMain()
 		sClipboardImage2 = IMG_Load("ic_menu_paste_holo_light.png");
 	if( !sKeyboardImage )
 		sKeyboardImage = IMG_Load("keyboard.png");
+	if( !sSettingsImage )
+		sSettingsImage = IMG_Load("ic_action_settings.png");
 
 	gui.clear();
+	guiWaitTouchRelease = true;
 	gui.push_back(GuiElement_t("Left", VID_X * 0.8,                                 0, VID_X * 0.2 / 3, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_LEFT>));
 	gui.push_back(GuiElement_t("Up",   VID_X * 0.8 + VID_X * 0.2 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELUP>));
 	gui.push_back(GuiElement_t("Mid",  VID_X * 0.8 + VID_X * 0.2 / 3,     VID_Y * 0.1, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8 + VID_X * 0.2 / 3, VID_Y * 0.1 * 2, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
 	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.6, mouseMovementCallback));
-	gui.push_back(GuiElement_t("Swipe to change mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.5, VID_Y * 0.1, mouseSpeedCallback));
+	gui.push_back(GuiElement_t("Mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.3, VID_Y * 0.1, mouseSpeedCallback));
+	gui.push_back(GuiElement_t("",     VID_X * 0.9, VID_Y * 0.9, VID_X * 0.1, VID_Y * 0.1, settingsToggleCallback, DrawSettingsImageCallback));
+
 	const char *TOUCHPAD_TEXT[] =
 	{
 		"Touchpad",
@@ -379,30 +410,49 @@ void addDialogYesNoButtons()
 	gui.push_back(GuiElement_t("No", VID_X * 0.6, VID_Y * 0.8, VID_X * 0.2, VID_Y * 0.1, dialogInputCallback<0>));
 }
 
+void settingsCloseGui()
+{
+	sInsideSettings = false;
+	guiWaitTouchRelease = true;
+}
+
 void processGui()
 {
-	for( int ii = 0; ii < gui.size(); ii++ )
+	std::vector<GuiElement_t> *gui = &::gui;
+	if( sInsideSettings )
+		gui = &settingsGui;
+	for( int ii = 0; ii < gui->size(); ii++ )
 	{
 		bool processed = false;
+		bool pointersPressed = false;
 		for( int i = 0; i < MAX_POINTERS; i++ )
 		{
-			if( touchPointers[i].pressed &&
-				touchPointers[i].x >= gui[ii].rect.x &&
-				touchPointers[i].x <= gui[ii].rect.x + gui[ii].rect.w &&
-				touchPointers[i].y >= gui[ii].rect.y &&
-				touchPointers[i].y <= gui[ii].rect.y + gui[ii].rect.h )
+			if( touchPointers[i].pressed )
+				pointersPressed = true;
+			if( !guiWaitTouchRelease &&
+				touchPointers[i].pressed &&
+				touchPointers[i].x >= gui->at(ii).rect.x &&
+				touchPointers[i].x <= gui->at(ii).rect.x + gui->at(ii).rect.w &&
+				touchPointers[i].y >= gui->at(ii).rect.y &&
+				touchPointers[i].y <= gui->at(ii).rect.y + gui->at(ii).rect.h )
 			{
 				processed = true;
-				gui[ii].input(&gui[ii], true, touchPointers[i].x - gui[ii].rect.x, touchPointers[i].y - gui[ii].rect.y);
-				gui[ii].draw(&gui[ii], true, touchPointers[i].x - gui[ii].rect.x, touchPointers[i].y - gui[ii].rect.y);
+				gui->at(ii).input(&gui->at(ii), true, touchPointers[i].x - gui->at(ii).rect.x, touchPointers[i].y - gui->at(ii).rect.y);
+				if( ii >= gui->size() )
+					return;
+				gui->at(ii).draw(&gui->at(ii), true, touchPointers[i].x - gui->at(ii).rect.x, touchPointers[i].y - gui->at(ii).rect.y);
 				break;
 			}
 		}
 		if( !processed )
 		{
-			gui[ii].input(&gui[ii], false, touchPointers[0].x - gui[ii].rect.x, touchPointers[0].y - gui[ii].rect.y);
-			gui[ii].draw(&gui[ii], false, touchPointers[0].x - gui[ii].rect.x, touchPointers[0].y - gui[ii].rect.y);
+			gui->at(ii).input(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
+			if( ii >= gui->size() )
+				return;
+			gui->at(ii).draw(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
 		}
+		if( guiWaitTouchRelease && !pointersPressed )
+			guiWaitTouchRelease = false;
 	}
 }
 
@@ -415,10 +465,24 @@ void mainLoop(bool noHid)
 		lastEvent = SDL_GetTicks();
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
-			if( evt.key.keysym.sym == SDLK_UNDO )
-				exit(0);
-			processKeyInput(evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
-			//printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
+			if( evt.key.keysym.sym == SDLK_WORLD_95 )
+			{
+				if( evt.type == SDL_KEYDOWN )
+				{
+					if( sInsideSettings ) // TODO: dialog stack?
+						sInsideSettings = false;
+					else
+						exit(0);
+				}
+			}
+			else
+			{
+				if( sInsideSettings ) // TODO: dialog stack?
+					settingsProcessKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED);
+				else
+					processKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED);
+				//printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
+			}
 		}
 		// PC mouse events
 		if( evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN )

@@ -18,14 +18,33 @@
 #define _XSDL_INPUT_H_
 
 #include <SDL/SDL.h>
+#include <map>
+#include <set>
 
-extern bool keys[SDLK_LAST];
+enum KeyCode
+{
+	MAX_MODIFIERS = 8,
+	MAX_KEYCODES  = 256 + MAX_MODIFIERS,
+	KEY_LCTRL     = MAX_KEYCODES - 8,
+	KEY_RCTRL     = MAX_KEYCODES - 7,
+	KEY_LSHIFT    = MAX_KEYCODES - 6,
+	KEY_RSHIFT    = MAX_KEYCODES - 5,
+	KEY_LALT      = MAX_KEYCODES - 4,
+	KEY_RALT      = MAX_KEYCODES - 3,
+	KEY_LSUPER    = MAX_KEYCODES - 2,
+	KEY_RSUPER    = MAX_KEYCODES - 1,
+};
+
+extern bool keys[MAX_KEYCODES];
 extern float mouseCoords[2];
 extern bool mouseButtons[SDL_BUTTON_X2+1];
+extern std::map<int, int> keyMappings;
+extern std::set<int> keyMappingsShift, keyMappingsCtrl, keyMappingsAlt;
 
 void openInput();
-void processKeyInput(SDLKey key, int pressed);
+void processKeyInput(SDLKey key, unsigned int unicode, int pressed);
 void processMouseInput();
 
+void saveKeyMappings();
 
 #endif

@@ -30,20 +30,25 @@
 #include "scancodes.h"
 #include "flash-kernel.h"
 
-bool keys[SDLK_LAST];
-//bool oldkeys[SDLK_LAST];
+bool keys[MAX_KEYCODES];
 float mouseCoords[2];
 bool mouseButtons[SDL_BUTTON_X2+1];
 bool oldmouseButtons[SDL_BUTTON_X2+1];
+std::map<int, int> keyMappings;
+std::set<int> keyMappingsShift, keyMappingsCtrl, keyMappingsAlt;
 
 int keyboardFd = -1;
 int mouseFd = -1;
 
-static int keycode_to_scancode[SDLK_LAST];
-
 static const char *DEV_KEYBOARD = "/dev/hidg0";
 static const char *DEV_MOUSE = "/dev/hidg1";
 static const char *DEV_CHECK_REPLUGGED = "/sys/devices/virtual/hidg/hidg0";
+static const char *KEYMAPPINGS_FILE = "keymappings.txt";
+static const char *KEYMAPPINGS_CTRL_FILE = "keymappings-ctrl.txt";
+static const char *KEYMAPPINGS_SHIFT_FILE = "keymappings-shift.txt";
+static const char *KEYMAPPINGS_ALT_FILE = "keymappings-alt.txt";
+
+static void readKeyMappings();
 
 static int runSu()
 {
@@ -194,17 +199,7 @@ void openInput()
 	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 		flashCustomKernel();
-	for( int k = SDLK_FIRST; k < SDLK_LAST; k++ )
-	{
-		for( int s = 0; s < SDL_NUM_SCANCODES; s++ )
-		{
-			if( scancodes_table[s] == k )
-			{
-				keycode_to_scancode[k] = s;
-				break;
-			}
-		}
-	}
+	readKeyMappings();
 }
 
 static void checkDeviceReplugged()
@@ -233,21 +228,21 @@ static void outputSendKeys()
 	if( keyboardFd == -1 || mouseFd == -1 )
 		return;
 
-	event[0] |= keys[SDLK_LCTRL] ? 0x1 : 0;
-	event[0] |= keys[SDLK_RCTRL] ? 0x10 : 0;
-	event[0] |= keys[SDLK_LSHIFT] ? 0x2 : 0;
-	event[0] |= keys[SDLK_RSHIFT] ? 0x20 : 0;
-	event[0] |= keys[SDLK_LALT] ? 0x4 : 0;
-	event[0] |= keys[SDLK_RALT] ? 0x40 : 0;
-	event[0] |= keys[SDLK_LSUPER] ? 0x8 : 0;
-	event[0] |= keys[SDLK_RSUPER] ? 0x80 : 0;
+	event[0] |= keys[KEY_LCTRL] ? 0x1 : 0;
+	event[0] |= keys[KEY_RCTRL] ? 0x10 : 0;
+	event[0] |= keys[KEY_LSHIFT] ? 0x2 : 0;
+	event[0] |= keys[KEY_RSHIFT] ? 0x20 : 0;
+	event[0] |= keys[KEY_LALT] ? 0x4 : 0;
+	event[0] |= keys[KEY_RALT] ? 0x40 : 0;
+	event[0] |= keys[KEY_LSUPER] ? 0x8 : 0;
+	event[0] |= keys[KEY_RSUPER] ? 0x80 : 0;
 	
 	int pos = 2;
-	for(int i = 1; i < SDLK_LAST; i++)
+	for(int i = 1; i < MAX_KEYCODES - MAX_MODIFIERS; i++)
 	{
-		if( keys[i] && keycode_to_scancode[i] < 255 )
+		if( keys[i] )
 		{
-			event[pos] = keycode_to_scancode[i];
+			event[pos] = i;
 			pos++;
 			if( pos >= sizeof(event) )
 				break;
@@ -292,17 +287,24 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel, int
 	}
 }
 
-void processKeyInput(SDLKey key, int pressed)
+void processKeyInput(SDLKey sdlkey, unsigned int unicode, int pressed)
 {
-	if( keys[key] == pressed )
+	//printf("processKeyInput: %d %d", key, pressed);
+	int code = -int(sdlkey);
+	if( unicode != 0 )
+		code = unicode;
+	std::map<int, int>::const_iterator scan = keyMappings.find(code);
+	if( scan == keyMappings.end() )
 	{
-		//printf("processKeyInput: duplicate event %d %d", key, pressed);
+		// TODO: invoke settings for undefined keycode
 		return;
 	}
-	//printf("processKeyInput: %d %d", key, pressed);
-	keys[key] = pressed;
+
+	if( keys[scan->second] == pressed )
+		return;
+
+	keys[scan->second] = pressed;
 	outputSendKeys();
-	//oldkeys[key] = keys[key];
 }
 
 void processMouseInput()
@@ -320,4 +322,95 @@ void processMouseInput()
 		mouseCoords[1] -= coords[1];
 	}
 	memcpy(oldmouseButtons, mouseButtons, sizeof(mouseButtons));
+}
+
+void readKeyMappings()
+{
+	int unicode = 0, scancode = 0;
+	keyMappings.clear();
+	keyMappingsCtrl.clear();
+	keyMappingsShift.clear();
+	keyMappingsAlt.clear();
+	FILE *ff = fopen(KEYMAPPINGS_FILE, "r");
+	if( !ff )
+	{
+		for( int k = SDLK_FIRST; k < SDLK_LAST; k++ )
+		{
+			for( int s = 0; s < SDL_NUM_SCANCODES; s++ )
+			{
+				if( scancodes_table[s] == k )
+				{
+					keyMappings[-k] = s;
+					break;
+				}
+			}
+		}
+		return;
+	}
+	char s[512];
+	while( fgets(s, sizeof(s), ff) != NULL )
+	{
+		if( sscanf(s, "%d=%d", &unicode, &scancode) != 2 )
+			continue;
+		keyMappings[unicode] = scancode;
+	}
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_CTRL_FILE, "r");
+	if( !ff )
+		return;
+	while( fgets(s, sizeof(s), ff) != NULL )
+	{
+		if( sscanf(s, "%d", &unicode) != 1 )
+			continue;
+		keyMappingsCtrl.insert(unicode);
+	}
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_SHIFT_FILE, "r");
+	if( !ff )
+		return;
+	while( fgets(s, sizeof(s), ff) != NULL )
+	{
+		if( sscanf(s, "%d", &unicode) != 1 )
+			continue;
+		keyMappingsShift.insert(unicode);
+	}
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_ALT_FILE, "r");
+	if( !ff )
+		return;
+	while( fgets(s, sizeof(s), ff) != NULL )
+	{
+		if( sscanf(s, "%d", &unicode) != 1 )
+			continue;
+		keyMappingsAlt.insert(unicode);
+	}
+	fclose(ff);
+}
+
+void saveKeyMappings()
+{
+	FILE *ff = fopen(KEYMAPPINGS_FILE, "w");
+	if( !ff )
+		return;
+	for( std::map<int, int>::const_iterator it = keyMappings.begin(); it != keyMappings.end(); it++ )
+		fprintf(ff, "%d=%d\n", it->first, it->second);
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_CTRL_FILE, "w");
+	if( !ff )
+		return;
+	for( std::set<int>::const_iterator it = keyMappingsCtrl.begin(); it != keyMappingsCtrl.end(); it++ )
+		fprintf(ff, "%d\n", *it);
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_SHIFT_FILE, "w");
+	if( !ff )
+		return;
+	for( std::set<int>::const_iterator it = keyMappingsShift.begin(); it != keyMappingsShift.end(); it++ )
+		fprintf(ff, "%d\n", *it);
+	fclose(ff);
+	ff = fopen(KEYMAPPINGS_ALT_FILE, "w");
+	if( !ff )
+		return;
+	for( std::set<int>::const_iterator it = keyMappingsAlt.begin(); it != keyMappingsAlt.end(); it++ )
+		fprintf(ff, "%d\n", *it);
+	fclose(ff);
 }

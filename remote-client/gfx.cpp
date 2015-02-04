@@ -64,8 +64,9 @@ void initSDL()
 		SDL_SetVideoMode(VID_X, VID_Y, 0, SDL_SWSURFACE);
 	else
 		SDL_SetVideoMode(VID_Y, VID_X, 0, SDL_SWSURFACE);
+	SDL_EnableUNICODE(1);
 	TTF_Init();
-	sFont = TTF_OpenFont("DroidSansMono.ttf", TEXT_H);
+	sFont = TTF_OpenFont("Roboto-Regular.ttf", TEXT_H);
 	if (!sFont)
 	{
 		printf("Error: cannot open font file, please reinstall the app");
