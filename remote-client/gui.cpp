@@ -177,9 +177,9 @@ static void settingsToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 	if( toggleElement(elem, pressed) )
 	{
 		sInsideSettings = true;
+		elem->toggled = false;
 		settingsInitGui();
 	}
-	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 static void DrawKeyboardImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
@@ -200,36 +200,6 @@ static void DrawSettingsImageCallback(GuiElement_t * elem, bool pressed, int x, 
 	drawImageCentered(sSettingsImage, elem->rect.x + elem->rect.w / 2, elem->rect.y + elem->rect.h / 2);
 }
 
-static int checkShiftRequired( unsigned int *sym )
-{
-	switch( *sym )
-	{
-		case '!': *sym = '1'; return 1;
-		case '@': *sym = '2'; return 1;
-		case '#': *sym = '3'; return 1;
-		case '$': *sym = '4'; return 1;
-		case '%': *sym = '5'; return 1;
-		case '^': *sym = '6'; return 1;
-		case '&': *sym = '7'; return 1;
-		case '*': *sym = '8'; return 1;
-		case '(': *sym = '9'; return 1;
-		case ')': *sym = '0'; return 1;
-		case '_': *sym = '-'; return 1;
-		case '+': *sym = '='; return 1;
-		case '|': *sym = '\\';return 1;
-		case '<': *sym = ','; return 1;
-		case '>': *sym = '.'; return 1;
-		case '?': *sym = '/'; return 1;
-		case ':': *sym = ';'; return 1;
-		case '"': *sym = '\'';return 1;
-		case '{': *sym = '['; return 1;
-		case '}': *sym = ']'; return 1;
-		case '~': *sym = '`'; return 1;
-		default: if( *sym >= 'A' && *sym <= 'Z' ) { *sym += 'a' - 'A'; return 1; };
-	}
-	return 0;
-}
-
 static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
 	if( toggleElement(elem, pressed) )
@@ -239,16 +209,8 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 		const char *pos = buf;
 		for( unsigned int key = UnicodeFromUtf8(&pos); key != 0; key = UnicodeFromUtf8(&pos) )
 		{
-			int shiftRequired = checkShiftRequired(&key);
-
-			if( shiftRequired )
-				processKeyInput(SDLK_LSHIFT, 0, 1);
-
 			processKeyInput((SDLKey)key, 0, 1);
 			processKeyInput((SDLKey)key, 0, 0);
-
-			if( shiftRequired )
-				processKeyInput(SDLK_LSHIFT, 0, 0);
 		}
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
@@ -421,14 +383,28 @@ void processGui()
 	std::vector<GuiElement_t> *gui = &::gui;
 	if( sInsideSettings )
 		gui = &settingsGui;
+
+	if( guiWaitTouchRelease )
+	{
+		bool pointersPressed = false;
+		for( int i = 0; i < MAX_POINTERS; i++ )
+			if( touchPointers[i].pressed )
+				pointersPressed = true;
+
+		if( guiWaitTouchRelease && !pointersPressed )
+			guiWaitTouchRelease = false;
+
+		for( int ii = 0; ii < gui->size(); ii++ )
+			gui->at(ii).draw(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
+
+		return;
+	}
+
 	for( int ii = 0; ii < gui->size(); ii++ )
 	{
 		bool processed = false;
-		bool pointersPressed = false;
 		for( int i = 0; i < MAX_POINTERS; i++ )
 		{
-			if( touchPointers[i].pressed )
-				pointersPressed = true;
 			if( !guiWaitTouchRelease &&
 				touchPointers[i].pressed &&
 				touchPointers[i].x >= gui->at(ii).rect.x &&
@@ -438,7 +414,7 @@ void processGui()
 			{
 				processed = true;
 				gui->at(ii).input(&gui->at(ii), true, touchPointers[i].x - gui->at(ii).rect.x, touchPointers[i].y - gui->at(ii).rect.y);
-				if( ii >= gui->size() )
+				if( ii >= gui->size() || guiWaitTouchRelease )
 					return;
 				gui->at(ii).draw(&gui->at(ii), true, touchPointers[i].x - gui->at(ii).rect.x, touchPointers[i].y - gui->at(ii).rect.y);
 				break;
@@ -447,12 +423,10 @@ void processGui()
 		if( !processed )
 		{
 			gui->at(ii).input(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
-			if( ii >= gui->size() )
+			if( ii >= gui->size() || guiWaitTouchRelease )
 				return;
 			gui->at(ii).draw(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
 		}
-		if( guiWaitTouchRelease && !pointersPressed )
-			guiWaitTouchRelease = false;
 	}
 }
 
@@ -465,7 +439,7 @@ void mainLoop(bool noHid)
 		lastEvent = SDL_GetTicks();
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
-			if( evt.key.keysym.sym == SDLK_WORLD_95 )
+			if( evt.key.keysym.sym == SDLK_UNDO )
 			{
 				if( evt.type == SDL_KEYDOWN )
 				{
@@ -480,7 +454,15 @@ void mainLoop(bool noHid)
 				if( sInsideSettings ) // TODO: dialog stack?
 					settingsProcessKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED);
 				else
-					processKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED);
+				{
+					if( !processKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED) )
+					{
+						sInsideSettings = true;
+						settingsDefineKeycode(evt.key.keysym.sym, evt.key.keysym.unicode);
+					}
+					else if( evt.key.keysym.unicode != 0 && evt.key.state == SDL_PRESSED )
+						processKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, false); // Keyboards do not send key-up for international keys
+				}
 				//printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
 			}
 		}

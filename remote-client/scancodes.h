@@ -22,5 +22,6 @@
 enum { SDL_NUM_SCANCODES = 512 };
 
 extern const int scancodes_table[SDL_NUM_SCANCODES];
+extern const int keycodes_shift_table[][2];
 
 #endif

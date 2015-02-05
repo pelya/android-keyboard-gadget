@@ -287,24 +287,49 @@ static void outputSendMouse(int x, int y, int b1, int b2, int b3, int wheel, int
 	}
 }
 
-void processKeyInput(SDLKey sdlkey, unsigned int unicode, int pressed)
+bool processKeyInput(SDLKey sdlkey, unsigned int unicode, bool pressed)
 {
-	//printf("processKeyInput: %d %d", key, pressed);
+	//printf("processKeyInput: %d %s pressed %d", sdlkey, SDL_GetKeyName(sdlkey), pressed);
 	int code = -int(sdlkey);
 	if( unicode != 0 )
 		code = unicode;
 	std::map<int, int>::const_iterator scan = keyMappings.find(code);
 	if( scan == keyMappings.end() )
-	{
-		// TODO: invoke settings for undefined keycode
-		return;
-	}
+		return false;
 
 	if( keys[scan->second] == pressed )
-		return;
+		return true;
+
+	bool shift = keyMappingsShift.count(code) > 0 && !keys[KEY_LSHIFT];
+	bool ctrl = keyMappingsCtrl.count(code) > 0 && !keys[KEY_LCTRL];
+	bool alt = keyMappingsAlt.count(code) > 0 && !keys[KEY_LALT];
+
+	if( pressed )
+	{
+		if( shift )
+			keys[KEY_LSHIFT] = true;
+		if( ctrl )
+			keys[KEY_LCTRL] = true;
+		if( alt )
+			keys[KEY_LALT] = true;
+		outputSendKeys();
+	}
 
 	keys[scan->second] = pressed;
 	outputSendKeys();
+
+	if( pressed )
+	{
+		if( shift )
+			keys[KEY_LSHIFT] = false;
+		if( ctrl )
+			keys[KEY_LCTRL] = false;
+		if( alt )
+			keys[KEY_LALT] = false;
+		outputSendKeys();
+	}
+
+	return true;
 }
 
 void processMouseInput()
@@ -345,12 +370,24 @@ void readKeyMappings()
 				}
 			}
 		}
+		for( int i = 0; keycodes_shift_table[i][0] != 0; i++ )
+		{
+			int from = -keycodes_shift_table[i][0];
+			int to = -keycodes_shift_table[i][1];
+			keyMappingsShift.insert(from);
+			if( keyMappings.count(to) == 0 )
+			{
+				printf("Error: cannot find key %d in keyMappings table for keycodes_shift_table %d %d\n", to, from, to);
+				continue;
+			}
+			keyMappings[from] = keyMappings[to];
+		}
 		return;
 	}
 	char s[512];
 	while( fgets(s, sizeof(s), ff) != NULL )
 	{
-		if( sscanf(s, "%d=%d", &unicode, &scancode) != 2 )
+		if( sscanf(s, "%d=%d", &unicode, &scancode) != 2 || unicode == 0 || scancode == 0 )
 			continue;
 		keyMappings[unicode] = scancode;
 	}
@@ -360,7 +397,7 @@ void readKeyMappings()
 		return;
 	while( fgets(s, sizeof(s), ff) != NULL )
 	{
-		if( sscanf(s, "%d", &unicode) != 1 )
+		if( sscanf(s, "%d", &unicode) != 1 || unicode == 0 )
 			continue;
 		keyMappingsCtrl.insert(unicode);
 	}
@@ -370,7 +407,7 @@ void readKeyMappings()
 		return;
 	while( fgets(s, sizeof(s), ff) != NULL )
 	{
-		if( sscanf(s, "%d", &unicode) != 1 )
+		if( sscanf(s, "%d", &unicode) != 1 || unicode == 0 )
 			continue;
 		keyMappingsShift.insert(unicode);
 	}
@@ -380,7 +417,7 @@ void readKeyMappings()
 		return;
 	while( fgets(s, sizeof(s), ff) != NULL )
 	{
-		if( sscanf(s, "%d", &unicode) != 1 )
+		if( sscanf(s, "%d", &unicode) != 1 || unicode == 0 )
 			continue;
 		keyMappingsAlt.insert(unicode);
 	}

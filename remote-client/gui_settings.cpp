@@ -55,7 +55,6 @@ static void deleteScancode(GuiElement_t * elem, bool pressed, int x, int y)
 		saveKeyMappings();
 		showScancodeDialog(sCurrentScancode);
 	}
-	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int y)
@@ -83,10 +82,12 @@ static void toggleModifierKey(GuiElement_t * elem, bool pressed, int x, int y)
 
 void showScancodeDialog(int scancode)
 {
+	char s[512];
 	sCurrentScancode = scancode;
 	settingsGui.clear();
 	guiWaitTouchRelease = true;
-	settingsGui.push_back(GuiElement_t(("Press a key for button " + sCurrentKeyname).c_str(), VID_X * 0.1, VID_Y * 0.0, VID_X * 0.8, VID_Y * 0.1));
+	sprintf(s, "Press a key for button %s with scancode %d", sCurrentKeyname.c_str(), scancode);
+	settingsGui.push_back(GuiElement_t(s, VID_X * 0.1, VID_Y * 0.0, VID_X * 0.8, VID_Y * 0.1));
 	settingsGui.push_back(GuiElement_t("Toggle keyboard", VID_X * 0.1, VID_Y * 0.1, VID_X * 0.4, VID_Y * 0.1, keyboardToggleCallback));
 	settingsGui.push_back(GuiElement_t("Close", VID_X * 0.5, VID_Y * 0.1, VID_X * 0.4, VID_Y * 0.1, closeScancodeDialog));
 	float y = VID_Y * 0.25;
@@ -95,12 +96,16 @@ void showScancodeDialog(int scancode)
 		if( it->second != scancode )
 			continue;
 		int key = it->first;
-		char s[512];
-		char keyname[64] = "Unknown";
+		char keyname[64] = "unknown key";
 		if( key < 0 && SDL_GetKeyName((SDLKey) -key) != NULL )
 			strcpy(keyname, SDL_GetKeyName((SDLKey) -key));
 		else
 			UnicodeToUtf8(key, keyname);
+		if( strcmp(keyname, "unknown key") == 0 && key < 0 )
+		{
+			keyname[0] = -key;
+			keyname[1] = 0;
+		}
 		sprintf(s, "Key %s %s %d", keyname, key > 0 ? "unicode" : "keycode", abs(key));
 		settingsGui.push_back(GuiElement_t(s, VID_X * 0.1, y, VID_X * 0.4, VID_Y * 0.1));
 		settingsGui.back().data = key;
@@ -133,7 +138,6 @@ static void keyDefine(GuiElement_t * elem, bool pressed, int x, int y)
 		}
 		showScancodeDialog(scancode);
 	}
-	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 void settingsProcessKeyInput(SDLKey sdlkey, unsigned int unicode, int pressed)
@@ -155,11 +159,13 @@ void settingsDefineKeycode(SDLKey key, unsigned int unicode)
 	sDefineUnknownKeycode = -int(key);
 	if( unicode != 0 )
 		sDefineUnknownKeycode = unicode;
+	settingsInitGui();
 }
 
 static void settingsInitGuiMainKeys()
 {
-	settingsGui.push_back(GuiElement_t("`",     SIZE_X * 0,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x35>));
+	const char *tilde[] = {"~", "`", NULL};
+	settingsGui.push_back(GuiElement_t(tilde,   SIZE_X * 0,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x35>));
 	settingsGui.push_back(GuiElement_t("1",     SIZE_X * 1,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x1e>));
 	settingsGui.push_back(GuiElement_t("2",     SIZE_X * 2,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x1f>));
 	settingsGui.push_back(GuiElement_t("3",     SIZE_X * 3,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x20>));
@@ -170,8 +176,10 @@ static void settingsInitGuiMainKeys()
 	settingsGui.push_back(GuiElement_t("8",     SIZE_X * 8,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x25>));
 	settingsGui.push_back(GuiElement_t("9",     SIZE_X * 9,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x26>));
 	settingsGui.push_back(GuiElement_t("0",     SIZE_X * 10, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x27>));
-	settingsGui.push_back(GuiElement_t("-",     SIZE_X * 11, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x2d>));
-	settingsGui.push_back(GuiElement_t("=",     SIZE_X * 12, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x2e>));
+	const char *minus[] = {"_", "-", NULL};
+	settingsGui.push_back(GuiElement_t(minus,   SIZE_X * 11, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x2d>));
+	const char *plus[] = {"+", "=", NULL};
+	settingsGui.push_back(GuiElement_t(plus,    SIZE_X * 12, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x2e>));
 	settingsGui.push_back(GuiElement_t("<--",   SIZE_X * 13, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x2a>));
 
 	settingsGui.push_back(GuiElement_t("Tab",   SIZE_X * 0,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x2b>));
@@ -185,11 +193,15 @@ static void settingsInitGuiMainKeys()
 	settingsGui.push_back(GuiElement_t("I",     SIZE_X * 8,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x0c>));
 	settingsGui.push_back(GuiElement_t("O",     SIZE_X * 9,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x12>));
 	settingsGui.push_back(GuiElement_t("P",     SIZE_X * 10, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x13>));
-	settingsGui.push_back(GuiElement_t("[",     SIZE_X * 11, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x2f>));
-	settingsGui.push_back(GuiElement_t("]",     SIZE_X * 12, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x30>));
-	settingsGui.push_back(GuiElement_t("\\",    SIZE_X * 13, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x31>));
+	const char *lbrace[] = {"{", "[", NULL};
+	settingsGui.push_back(GuiElement_t(lbrace,  SIZE_X * 11, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x2f>));
+	const char *rbrace[] = {"}", "]", NULL};
+	settingsGui.push_back(GuiElement_t(rbrace,  SIZE_X * 12, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x30>));
+	const char *backslash[] = {"|", "\\", NULL};
+	settingsGui.push_back(GuiElement_t(backslash,SIZE_X * 13, SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x31>));
 
-	settingsGui.push_back(GuiElement_t("Caps",  SIZE_X * 0,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x39>));
+	const char *caps[] = {"Caps", "Lock", NULL};
+	settingsGui.push_back(GuiElement_t(caps,    SIZE_X * 0,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x39>));
 	settingsGui.push_back(GuiElement_t("A",     SIZE_X * 1,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x04>));
 	settingsGui.push_back(GuiElement_t("S",     SIZE_X * 2,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x16>));
 	settingsGui.push_back(GuiElement_t("D",     SIZE_X * 3,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x07>));
@@ -199,8 +211,10 @@ static void settingsInitGuiMainKeys()
 	settingsGui.push_back(GuiElement_t("J",     SIZE_X * 7,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x0d>));
 	settingsGui.push_back(GuiElement_t("K",     SIZE_X * 8,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x0e>));
 	settingsGui.push_back(GuiElement_t("L",     SIZE_X * 9,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x0f>));
-	settingsGui.push_back(GuiElement_t(";",     SIZE_X * 10, SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x33>));
-	settingsGui.push_back(GuiElement_t("'",     SIZE_X * 11, SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x34>));
+	const char *semicol[] = {":", ";", NULL};
+	settingsGui.push_back(GuiElement_t(semicol, SIZE_X * 10, SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x33>));
+	const char *quote[] = {"'", "\"", NULL};
+	settingsGui.push_back(GuiElement_t(quote,   SIZE_X * 11, SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x34>));
 	settingsGui.push_back(GuiElement_t("Enter", SIZE_X * 12, SIZE_Y * 4, SIZE_X * 2, SIZE_Y, keyDefine<0x28>));
 
 	settingsGui.push_back(GuiElement_t("Shift", SIZE_X * 0,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<KEY_LSHIFT>));
@@ -212,13 +226,15 @@ static void settingsInitGuiMainKeys()
 	settingsGui.push_back(GuiElement_t("N",     SIZE_X * 6,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x11>));
 	settingsGui.push_back(GuiElement_t("M",     SIZE_X * 7,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x10>));
 	const char *comma[] = {"<", ",", NULL};
-	settingsGui.push_back(GuiElement_t(comma,     SIZE_X * 8,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x36>));
+	settingsGui.push_back(GuiElement_t(comma,   SIZE_X * 8,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x36>));
 	const char *dot[] = {">", ".", NULL};
 	settingsGui.push_back(GuiElement_t(dot,     SIZE_X * 9,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x36>));
 	const char *slash[] = {"?", "/", NULL};
-	settingsGui.push_back(GuiElement_t(slash,     SIZE_X * 10, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x37>));
+	settingsGui.push_back(GuiElement_t(slash,   SIZE_X * 10, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x37>));
 	settingsGui.push_back(GuiElement_t("Shift", SIZE_X * 11, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<KEY_RSHIFT>));
 	settingsGui.push_back(GuiElement_t("Up",    SIZE_X * 12, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x52>));
+	const char *nokey[] = {"No", "key", NULL};
+	settingsGui.push_back(GuiElement_t(nokey,   SIZE_X * 13, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x00>));
 
 	settingsGui.push_back(GuiElement_t("Ctrl",  SIZE_X * 0,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LCTRL>));
 	settingsGui.push_back(GuiElement_t("Meta",  SIZE_X * 1,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LSUPER>));
@@ -264,7 +280,8 @@ static void settingsInitGuiExtendedKeys()
 	settingsGui.push_back(GuiElement_t("F23",   SIZE_X * 3,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x72>));
 	settingsGui.push_back(GuiElement_t("F24",   SIZE_X * 4,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x73>));
 
-	settingsGui.push_back(GuiElement_t("NumL", SIZE_X * 10, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x53>));
+	const char *numlock[] = {"Num", "Lock", NULL};
+	settingsGui.push_back(GuiElement_t(numlock, SIZE_X * 10, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x53>));
 	settingsGui.push_back(GuiElement_t("/",     SIZE_X * 11, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x54>));
 	settingsGui.push_back(GuiElement_t("*",     SIZE_X * 12, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x55>));
 	settingsGui.push_back(GuiElement_t("-",     SIZE_X * 13, SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x56>));
@@ -288,9 +305,12 @@ static void settingsInitGuiExtendedKeys()
 
 	settingsGui.push_back(GuiElement_t("Esc",   SIZE_X * 0,  SIZE_Y * 2, SIZE_X, SIZE_Y, keyDefine<0x29>));
 
-	settingsGui.push_back(GuiElement_t("Print", SIZE_X * 6,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x46>));
-	settingsGui.push_back(GuiElement_t("Scroll",SIZE_X * 7,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x47>));
-	settingsGui.push_back(GuiElement_t("Pause", SIZE_X * 8,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x48>));
+	const char *print[] = {"Print", "SysRq", NULL};
+	settingsGui.push_back(GuiElement_t(print,   SIZE_X * 6,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x46>));
+	const char *scrlock[] = {"Scroll", "Lock", NULL};
+	settingsGui.push_back(GuiElement_t(scrlock, SIZE_X * 7,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x47>));
+	const char *pause[] = {"Pause", "Break", NULL};
+	settingsGui.push_back(GuiElement_t(pause,   SIZE_X * 8,  SIZE_Y * 3, SIZE_X, SIZE_Y, keyDefine<0x48>));
 
 	settingsGui.push_back(GuiElement_t("Insert",SIZE_X * 6,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x49>));
 	settingsGui.push_back(GuiElement_t("Home",  SIZE_X * 7,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x4a>));
@@ -300,8 +320,10 @@ static void settingsInitGuiExtendedKeys()
 	settingsGui.push_back(GuiElement_t("End",   SIZE_X * 7,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x4d>));
 	settingsGui.push_back(GuiElement_t("PgDn",  SIZE_X * 8,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x4e>));
 
-	settingsGui.push_back(GuiElement_t("£",     SIZE_X * 0,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x32>));
-	settingsGui.push_back(GuiElement_t("/",     SIZE_X * 0,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x38>));
+	settingsGui.push_back(GuiElement_t("£",     SIZE_X * 0,  SIZE_Y * 4, SIZE_X, SIZE_Y, keyDefine<0x32>));
+	settingsGui.push_back(GuiElement_t("/",     SIZE_X * 0,  SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x38>));
+	const char *nokey[] = {"No", "key", NULL};
+	settingsGui.push_back(GuiElement_t(nokey,   SIZE_X * 0,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x00>));
 
 	settingsGui.push_back(GuiElement_t("App",   SIZE_X * 0,  SIZE_Y * 1, SIZE_X, SIZE_Y, keyDefine<0x65>));
 	settingsGui.push_back(GuiElement_t("Power", SIZE_X * 1,  SIZE_Y * 1, SIZE_X, SIZE_Y, keyDefine<0x66>));
@@ -344,7 +366,6 @@ static void settingsClose(GuiElement_t * elem, bool pressed, int x, int y)
 		settingsCloseGui();
 		guiWaitTouchRelease = true;
 	}
-	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 void settingsInitGui()
@@ -362,13 +383,12 @@ void settingsInitGui()
 			UnicodeToUtf8(sDefineUnknownKeycode, keyname);
 		sprintf(s, "Redefine key %s %s %d", keyname, sDefineUnknownKeycode > 0 ? "unicode" : "keycode", abs(sDefineUnknownKeycode));
 	}
-	settingsGui.push_back(GuiElement_t(s, 0, 0, VID_X * 0.4, SIZE_Y, keyboardShowMainKeys));
+	settingsGui.push_back(GuiElement_t(s, 0, 0, VID_X * 0.4, SIZE_Y));
 	settingsGui.push_back(GuiElement_t("Main keys", VID_X * 0.4, 0, VID_X * 0.2, SIZE_Y, keyboardShowMainKeys));
 	settingsGui.back().toggled = !sShowExtendedKeys;
 	settingsGui.push_back(GuiElement_t("Extended keys", VID_X * 0.6, 0, VID_X * 0.2, SIZE_Y, keyboardShowExtendedKeys));
 	settingsGui.back().toggled = sShowExtendedKeys;
 	settingsGui.push_back(GuiElement_t("Close", VID_X * 0.8, 0, VID_X * 0.2, SIZE_Y, settingsClose));
-	settingsGui.back().toggled = sShowExtendedKeys;
 
 	if( sShowExtendedKeys )
 		settingsInitGuiExtendedKeys();

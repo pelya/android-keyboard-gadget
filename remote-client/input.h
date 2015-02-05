@@ -24,15 +24,15 @@
 enum KeyCode
 {
 	MAX_MODIFIERS = 8,
-	MAX_KEYCODES  = 256 + MAX_MODIFIERS,
-	KEY_LCTRL     = MAX_KEYCODES - 8,
-	KEY_RCTRL     = MAX_KEYCODES - 7,
-	KEY_LSHIFT    = MAX_KEYCODES - 6,
-	KEY_RSHIFT    = MAX_KEYCODES - 5,
-	KEY_LALT      = MAX_KEYCODES - 4,
-	KEY_RALT      = MAX_KEYCODES - 3,
-	KEY_LSUPER    = MAX_KEYCODES - 2,
-	KEY_RSUPER    = MAX_KEYCODES - 1,
+	KEY_LCTRL     = 224, // scancode inside scancodes.c
+	KEY_LSHIFT    = 225,
+	KEY_LALT      = 226,
+	KEY_LSUPER    = 227,
+	KEY_RCTRL     = 228,
+	KEY_RSHIFT    = 229,
+	KEY_RALT      = 230,
+	KEY_RSUPER    = 231,
+	MAX_KEYCODES  = KEY_RSUPER + 1,
 };
 
 extern bool keys[MAX_KEYCODES];
@@ -42,7 +42,7 @@ extern std::map<int, int> keyMappings;
 extern std::set<int> keyMappingsShift, keyMappingsCtrl, keyMappingsAlt;
 
 void openInput();
-void processKeyInput(SDLKey key, unsigned int unicode, int pressed);
+bool processKeyInput(SDLKey key, unsigned int unicode, bool pressed);
 void processMouseInput();
 
 void saveKeyMappings();

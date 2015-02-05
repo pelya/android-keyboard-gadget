@@ -52,6 +52,7 @@ struct GuiElement_t
 		this->toggled = false;
 		this->x = this->y = 0;
 		this->locked = false;
+		this->data = 0;
 	}
 
 	GuiElement_t(const char ** text, int x = 0, int y = 0, int w = 0, int h = 0, GuiElementCallback_t input = defaultInputCallback, GuiElementCallback_t draw = defaultDrawCallback)
@@ -67,6 +68,7 @@ struct GuiElement_t
 		this->toggled = false;
 		this->x = this->y = 0;
 		this->locked = false;
+		this->data = 0;
 	}
 
 	static void defaultInputCallback(GuiElement_t * elem, bool pressed, int x, int y);
