@@ -59,8 +59,10 @@ static void deleteScancode(GuiElement_t * elem, bool pressed, int x, int y)
 
 static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
+#ifdef __ANDROID__
 	if( GuiElement_t::toggleElement(elem, pressed) )
 		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+#endif
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 

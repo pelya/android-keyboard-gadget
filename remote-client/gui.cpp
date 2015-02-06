@@ -165,10 +165,10 @@ static void touchpadCallback(GuiElement_t * elem, bool pressed, int x, int y)
 
 static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
+#ifdef __ANDROID__
 	if( toggleElement(elem, pressed) )
-	{
 		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
-	}
+#endif
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
@@ -204,6 +204,7 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 {
 	if( toggleElement(elem, pressed) )
 	{
+#ifdef __ANDROID__
 		char buf[1024];
 		SDL_ANDROID_GetClipboardText(buf, sizeof(buf));
 		const char *pos = buf;
@@ -212,6 +213,7 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 			processKeyInput((SDLKey)key, 0, 1);
 			processKeyInput((SDLKey)key, 0, 0);
 		}
+#endif
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }

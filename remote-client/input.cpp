@@ -202,6 +202,9 @@ void openInput()
 	readKeyMappings();
 }
 
+#ifndef __ANDROID__
+#define st_mtime_nsec st_mtim.tv_nsec
+#endif
 static void checkDeviceReplugged()
 {
 	static unsigned long last_mtime;

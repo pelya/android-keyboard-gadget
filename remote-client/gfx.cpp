@@ -60,10 +60,14 @@ void initSDL()
 {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
+#ifdef __ANDROID__
 	if( SDL_ListModes(NULL, 0)[0]->w > SDL_ListModes(NULL, 0)[0]->h )
-		SDL_SetVideoMode(VID_X, VID_Y, 0, SDL_SWSURFACE);
+		SDL_SetVideoMode(VID_X, VID_Y, 16, SDL_SWSURFACE);
 	else
-		SDL_SetVideoMode(VID_Y, VID_X, 0, SDL_SWSURFACE);
+		SDL_SetVideoMode(VID_Y, VID_X, 16, SDL_SWSURFACE);
+#else
+	SDL_SetVideoMode(VID_X, VID_Y, 16, SDL_SWSURFACE);
+#endif
 	SDL_EnableUNICODE(1);
 	TTF_Init();
 	sFont = TTF_OpenFont("Roboto-Regular.ttf", TEXT_H);
