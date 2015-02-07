@@ -93,7 +93,7 @@ void renderStringColor(const char *c, int x, int y, int r, int g, int b, SDL_Sur
 		return;
 	SDL_Color fColor = {r, g, b};
 	SDL_Rect fontRect = {0, 0, 0, 0};
-	SDL_Surface* fontSurface = TTF_RenderUTF8_Solid(sFont, c, fColor);
+	SDL_Surface* fontSurface = TTF_RenderUTF8_Blended(sFont, c, fColor);
 	fontRect.w = fontSurface->w;
 	fontRect.h = fontSurface->h;
 	fontRect.x = x - fontRect.w / 2;
