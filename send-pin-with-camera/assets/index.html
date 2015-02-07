@@ -1,0 +1,72 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+    <title>Remote Video</title> 
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="res/jquery.mobile-1.3.2.min.css" />
+    <link rel="stylesheet" href="extern.css">
+    <script src="res/jquery-1.9.1.min.js"></script>
+    <script src="res/jquery.mobile-1.3.2.min.js"></script>
+    <script src="res/jquery.waitforimages.min.js"></script>
+    <script src="res/jquery.json-2.3.min.js"></script>
+    <script src="res/jQueryRotateCompressed.js"></script>
+    <script src="flowplayer-3.2.11.min.js"></script>
+    <script src="droideye.js"></script>
+</head> 
+<body> 
+
+<!-- 
+/*********************************************************
+ * Main page 
+ *
+ *********************************************************/
+-->
+<div data-role="page" data-title="" id="page_main" data-theme="c" >
+    <div data-role="content">
+        <ul data-role="listview" data-inset="true" >
+            <li>
+            <!--div style="width:60%; float:left; display: inline-block"-->
+                <div class="live_image_box" id="video_plane">
+                    <img id="live_image" src="images/black.png">
+                </div>
+                <div>
+                    <div id="player" class="center" style="display:block;height:32px;"></div>   
+                </div>    
+            <!--/div-->
+            </li>
+            <li data-role="fieldcontain" class="center">
+            <!--div style="width:30%; display: inline-block" data-role="fieldcontain" class="center"-->
+                <div class="center">
+                    <span>Video size:</span>
+                    <select name="resolution-choice" id="resolution-choice" data-native-menu="false">
+                    </select>
+                    <input type="checkbox" id="checkbox-audio" class="custom" />
+                    <label for="checkbox-audio">Enable Audio</label>
+                    <div data-role="controlgroup" data-type="horizontal">
+                        <input id="rotate0" type="button" value="rotate 0"/>
+                        <input id="rotate90" type="button" value="rotate 90"/>
+                        <input id="rotate180" type="button" value="rotate 180"/>
+                        <input id="rotate270" type="button" value="rotate 270"/>
+                        <input id="btn_autofocus" type="button" value="Auto Focus"/>
+                        <input id="btn_dimscreen" type="button" value="Dim Screen"/>
+                    </div>
+                    <div data-role="controlgroup" data-type="horizontal">
+                        <input type="range" name="slider" id="slider" value="30" min="0" max="100" data-highlight="true" data-popup-enabled="true"/>
+                    </div>
+
+                    <input id="btn_play" type="button" value="Play Video"/>
+                </div>
+            <!--/div-->
+            </li>
+        </ul>
+        <!-- for debug -->
+        <div id="bottom_div">
+            <span id="debug_msg">Connecting...</span>
+        </div>
+    </div><!-- /content -->  
+
+</div><!-- page -->
+
+</body>
+</html>

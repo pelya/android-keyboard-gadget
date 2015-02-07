@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wifi Camera</string>
+
+    <string name="action_exit">Exit</string>
+
+    <string name="msg_access_local">Open at local: </string>
+    <string name="msg_access_internet">Open at internet:  </string>
+    <string name="msg_access_query">Detecting internet ... </string>
+    <string name="msg_access_query_error">Also you can setup your router to access from internet</string>
+    <string name="msg_error">Error: Please enable wifi</string>
+</resources>

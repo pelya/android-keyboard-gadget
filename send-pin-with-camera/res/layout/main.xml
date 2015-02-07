@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent">
+
+    <SurfaceView 
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"        
+        android:id="@+id/surface_camera" />
+
+    <teaonly.droideye.OverlayView
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent"
+        android:background="#00000000" 
+        android:id="@+id/surface_overlay"/>
+
+    <FrameLayout
+        android:layout_width="fill_parent" 
+        android:layout_height="fill_parent">
+        
+        <LinearLayout 
+            android:id="@+id/layout_setup" 
+            android:layout_width="fill_parent" 
+            android:layout_height="fill_parent" 
+            android:gravity="center|bottom" 
+            android:orientation="vertical">
+            
+            <LinearLayout
+                android:layout_height="wrap_content" 
+                android:layout_width="fill_parent"
+                android:gravity="center"
+                android:background="#88333333"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_message1"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft = "5dip"
+                    android:layout_marginRight = "5dip"
+                    android:gravity="center"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="24dip"/>
+                <TextView
+                    android:id="@+id/tv_message2"
+                    android:visibility="gone"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft = "5dip"
+                    android:layout_marginRight = "5dip"
+                    android:gravity="center"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="24dip"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_height="wrap_content" 
+                android:layout_width="fill_parent"
+                android:gravity="center"
+                android:background="#88333333"
+                android:orientation="horizontal">
+                <!--
+                <Button 
+                    android:id="@+id/btn_setup"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_margin = "8dip"
+                    android:textSize="24dip"
+                    android:textStyle="bold"            
+                    android:text="@string/action_setup"/>
+                -->
+                <Button 
+                    android:id="@+id/btn_exit"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_margin = "8dip"
+                    android:textSize="24dip"
+                    android:textStyle="bold"            
+                    android:text="@string/action_exit"/>
+
+            </LinearLayout>
+            
+        </LinearLayout>
+
+    </FrameLayout>    
+
+    <LinearLayout android:id="@+id/black_screen"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#000"
+        android:visibility="gone" >
+    </LinearLayout>
+</FrameLayout>

@@ -158,12 +158,8 @@ Advanced examples.
 Here is [the list of keys that this utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
 
 If you need to crack a PIN code, but the target system loses keypresses (happens in MacOS BIOS),
-there is a [handy app](http://sourceforge.net/projects/libsdl-android/files/tmp/send-pin-with-camera-src.tar.xz/download) for that,
-which uses camera to check if each keypress is recognized, you have to align your phone camera
-so that blue circles will match positions of PIN code digits on the screen.
-
-This app does not work on Lollipop, only on Android 4.X.
-To modify amount of digits in PIN code, change variable PIN_LENGTH inside MainActivity.java and recompile this app.
+there is a [handy app](send-pin-with-camera/) for that,
+which uses camera to check if each keypress is recognized.
 
 Compilation
 ===========
