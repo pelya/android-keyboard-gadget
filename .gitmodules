@@ -1,0 +1,6 @@
+[submodule "libvnc"]
+	path = libvnc
+	url = git@github.com:LibVNC/libvncserver.git
+[submodule "openssl"]
+	path = openssl
+	url = git@github.com:android/platform_external_openssl.git
