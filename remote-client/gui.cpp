@@ -441,6 +441,10 @@ void mainLoop(bool noHid)
 		lastEvent = SDL_GetTicks();
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
+#ifndef __ANDROID__
+			if( (evt.key.keysym.unicode & 0xFF80) == 0 )
+				evt.key.keysym.unicode = 0; // That's how Android sends keypresses
+#endif
 			if( evt.key.keysym.sym == SDLK_UNDO )
 			{
 				if( evt.type == SDL_KEYDOWN )
@@ -472,7 +476,7 @@ void mainLoop(bool noHid)
 		if( evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN )
 		{
 			// TODO: implement PC input
-			touchPointers[evt.jbutton.button].pressed = (evt.button.state == SDL_PRESSED);
+			touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].pressed = (evt.button.state == SDL_PRESSED);
 			/*
 			if( evt.button.state == SDL_PRESSED )
 				touchPointers[evt.jbutton.button].pressedTime = lastEvent;
@@ -509,6 +513,10 @@ void mainLoop(bool noHid)
 				touchPointers[evt.jball.ball].y = evt.jball.yrel;
 				//printf("Touch %d: %d %d", evt.jball.ball, evt.jball.xrel, evt.jball.yrel);
 			}
+		}
+		if( evt.type == SDL_QUIT )
+		{
+			exit(0);
 		}
 	}
 
