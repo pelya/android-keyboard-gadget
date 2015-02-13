@@ -22,6 +22,7 @@
 #include "input.h"
 #include "touchpad.h"
 #include "tools.h"
+#include "vnc_server.h"
 
 
 struct TouchPointer_t touchPointers[MAX_POINTERS];
@@ -218,6 +219,27 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
+
+static void vncServerCallback(GuiElement_t * elem, bool pressed, int x, int y)
+{
+	if( toggleElement(elem, pressed) )
+	{
+		if( vncServerRunning() )
+		{
+			elem->text[0] = "VNC server stopped";
+			elem->text[1] = "Touch to start";
+			vncServerStop();
+		}
+		else
+		{
+			vncServerStart();
+			elem->text[0] = "VNC server started on";
+			elem->text[1] = vncServerGetIpAddress();
+		}
+	}
+	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+}
+
 void createGuiMain()
 {
 	if( !sClipboardImage1 )
@@ -236,7 +258,7 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Mid",  VID_X * 0.8 + VID_X * 0.2 / 3,     VID_Y * 0.1, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8 + VID_X * 0.2 / 3, VID_Y * 0.1 * 2, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
-	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.6, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.4, mouseMovementCallback));
 	gui.push_back(GuiElement_t("Mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.3, VID_Y * 0.1, mouseSpeedCallback));
 	gui.push_back(GuiElement_t("",     VID_X * 0.9, VID_Y * 0.9, VID_X * 0.1, VID_Y * 0.1, settingsToggleCallback, DrawSettingsImageCallback));
 
@@ -267,6 +289,14 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Alt",   VID_X * 0.7, VID_Y * 0.1, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LALT>));
 	gui.push_back(GuiElement_t("Shift", VID_X * 0.6, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSHIFT>));
 	gui.push_back(GuiElement_t("Meta",  VID_X * 0.7, VID_Y * 0.2, VID_X * 0.1, VID_Y * 0.1, keyInputCallback<SDLK_LSUPER>));
+
+	const char *VNC_SERVER_TEXT[] =
+	{
+		"VNC server stopped",
+		"Touch to start",
+		NULL
+	};
+	gui.push_back(GuiElement_t(VNC_SERVER_TEXT, VID_X * 0.6, VID_Y * 0.7, VID_X * 0.5, VID_Y * 0.2, vncServerCallback));
 
 	FILE * ff = fopen(mouseSpeedSaveFile, "r");
 	if( ff )
