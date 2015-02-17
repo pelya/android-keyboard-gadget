@@ -19,17 +19,60 @@
 #include "input.h"
 
 static bool serverRunning = false;
+static int width, height, videoBufferLength;
+static unsigned char *videoBuffer;
+static rfbScreenInfoPtr server;
+
+static void onCameraFrame()
+{
+	rfbMarkRectAsModified(server, 0, 0, width, height);
+}
 
 void vncServerStart()
 {
+	if (serverRunning)
+		return;
+	printf("Starting VNC server");
 	serverRunning = true;
-	//openCamera(int *width, int *height, unsigned char ** buffer, int *bufferLength, CameraCallback_t callback);
+	width = 1280;
+	height = 720;
+	openCamera(&width, &height, 5, &videoBuffer, &videoBufferLength, onCameraFrame);
+	server = rfbGetScreen(NULL, NULL, width, height, 5, 3, 2);
+	// RGB565
+	server->serverFormat.redMax = 31;
+	server->serverFormat.greenMax = 63;
+	server->serverFormat.blueMax = 31;
+	server->serverFormat.redShift = 11;
+	server->serverFormat.greenShift = 5;
+	server->serverFormat.blueShift = 0;
+	char serialno[256] = "Unknown";
+	FILE *ff = popen("getprop ro.serialno", "r");
+	if (ff)
+	{
+		fgets(serialno, sizeof(serialno), ff);
+		if (strstr(serialno, "\n") != NULL)
+			strstr(serialno, "\n")[0] = 0;
+		pclose(ff);
+	}
+	server->desktopName = serialno;
+	server->frameBuffer = (char *)videoBuffer;
+	server->alwaysShared = TRUE;
+	rfbInitServer(server);
+	rfbRunEventLoop(server, -1, TRUE);
+	printf("VNC server started");
 }
+
 void vncServerStop()
 {
+	printf("Stopping VNC server");
+	rfbShutdownServer(server, TRUE);
+	//rfbScreenCleanup(server);
+	closeCamera();
 	serverRunning = false;
-	//closeCamera();
+	videoBuffer = NULL;
+	printf("VNC server stopped");
 }
+
 bool vncServerRunning()
 {
 	return serverRunning;
@@ -73,3 +116,27 @@ std::string vncServerGetIpAddress()
 	}
 	return ret;
 }
+
+void vncServerDrawVideoBuffer(int x, int y, int w, int h)
+{
+	if (!serverRunning)
+		return;
+
+	Uint16 *pixels = (Uint16 *)SDL_GetVideoSurface()->pixels;
+	Uint32 pitch = SDL_GetVideoSurface()->w;
+	Uint32 srcWidth = server->width;
+	Uint32 srcHeight = server->height;
+	pixels += x + y * pitch;
+
+	for(Uint32 hh = 0; hh < h; hh++, pixels += pitch)
+	{
+		Uint16 *src = (Uint16 *)videoBuffer;
+		src += (srcHeight * hh / h) * srcWidth;
+		for (Uint32 ww = 0; ww < w; ww++)
+		{
+			pixels[ww] = src[srcWidth * ww / w];
+		}
+	}
+
+}
+

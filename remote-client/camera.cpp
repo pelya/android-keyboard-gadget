@@ -13,35 +13,50 @@ static int width;
 static int height;
 static uint8_t * cameraBuffer = NULL;
 static CameraCallback_t cameraCallback = NULL;
+static Uint32 fpsDelay;
+static Uint32 fpsTime;
 
 static void toRGB565(uint8_t* yuvs, unsigned int width, unsigned int height, uint8_t* rgbs);
 
-extern "C" void remote_hid_keyboard_client_CameraFeed_actualCameraSize(JNIEnv* env, jobject thiz, jint w, jint h)
+extern "C" void Java_remote_hid_keyboard_client_CameraFeed_actualCameraSize(JNIEnv* env, jobject thiz, jint w, jint h)
 {
 	width = w;
 	height = h;
+	printf("Camera actual dimensions %dx%d", width, height);
+	SDL_Flip(SDL_GetVideoSurface()); // We need to do one screen refresh here
 }
 
-extern "C" void remote_hid_keyboard_client_CameraFeed_pushImage(JNIEnv* env, jobject thiz, jbyteArray frame)
+extern "C" void Java_remote_hid_keyboard_client_CameraFeed_pushImage(JNIEnv* env, jobject thiz, jbyteArray frame)
 {
+	//printf("Camera pushImage");
 	jboolean isCopy = JNI_TRUE;
 	jbyte *buffer = (jbyte *) env->GetPrimitiveArrayCritical(frame, &isCopy);
 	toRGB565((uint8_t *)buffer, width, height, cameraBuffer);
 	if( cameraCallback )
 		cameraCallback();
 	env->ReleasePrimitiveArrayCritical(frame, buffer, 0);
+
+	// Cap FPS
+	Uint32 curTime = SDL_GetTicks();
+	int sleepTime = fpsTime - curTime;
+	if (sleepTime > fpsDelay)
+		sleepTime = fpsDelay;
+	if (sleepTime > 0)
+		SDL_Delay(sleepTime);
+	fpsTime = curTime + fpsDelay;
 }
 
-void openCamera(int *w, int *h, unsigned char ** buffer, int *bufferLength, CameraCallback_t callback)
+void openCamera(int *w, int *h, int fps, unsigned char ** buffer, int *bufferLength, CameraCallback_t callback)
 {
 	if( !javaEnv )
 	{
 		SDL_ANDROID_JavaVM()->AttachCurrentThread(&javaEnv, NULL);
 		cameraClass = javaEnv->FindClass("remote/hid/keyboard/client/CameraFeed");
-		initCamera = javaEnv->GetMethodID(cameraClass, "initCamera", "(II)V");
-		deinitCamera = javaEnv->GetMethodID(cameraClass, "deinitCamera", "()V");
+		initCamera = javaEnv->GetStaticMethodID(cameraClass, "initCamera", "(III)V");
+		deinitCamera = javaEnv->GetStaticMethodID(cameraClass, "deinitCamera", "()V");
 	}
-	javaEnv->CallStaticVoidMethod(cameraClass, initCamera, (jint)*w, (jint)*h);
+	printf("Opening camera: class %p methods %p %p", cameraClass, initCamera, deinitCamera);
+	javaEnv->CallStaticVoidMethod(cameraClass, initCamera, (jint)*w, (jint)*h, (jint)fps);
 	*w = width;
 	*h = height;
 	cameraBuffer = (uint8_t *)malloc(width * height * 2);
@@ -49,13 +64,18 @@ void openCamera(int *w, int *h, unsigned char ** buffer, int *bufferLength, Came
 	if( bufferLength )
 		*bufferLength = width * height * 2;
 	cameraCallback = callback;
+	fpsDelay = 1000 / fps;
+	fpsTime = SDL_GetTicks();
+	printf("Camera opened");
 }
 
 void closeCamera()
 {
+	printf("Closing camera");
 	if( !javaEnv )
 		return;
 	javaEnv->CallStaticVoidMethod(cameraClass, deinitCamera);
+	printf("Camera closed");
 }
 
 /**

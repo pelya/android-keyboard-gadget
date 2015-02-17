@@ -5,7 +5,7 @@
 
 typedef void (*CameraCallback_t) (void);
 
-void openCamera(int *width, int *height, unsigned char ** buffer, int *bufferLength, CameraCallback_t callback);
+void openCamera(int *width, int *height, int fps, unsigned char ** buffer, int *bufferLength, CameraCallback_t callback);
 
 void closeCamera();
 

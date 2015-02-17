@@ -23,7 +23,7 @@
 
 enum { MAX_POINTERS = 8 };
 
-extern struct TouchPointer_t { int x; int y; int pressure; int pressed;} touchPointers[MAX_POINTERS];
+extern struct TouchPointer_t { int x; int y; int pressure; int pressed; bool delayRelease; } touchPointers[MAX_POINTERS];
 
 struct GuiElement_t;
 

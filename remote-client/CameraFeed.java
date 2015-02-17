@@ -1,4 +1,4 @@
-package teaonly.droideye;
+package remote.hid.keyboard.client;
 
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
@@ -9,28 +9,26 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
-
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import java.io.*;
 import java.util.*;
-
 import java.nio.ByteBuffer;
 
 public class CameraFeed implements PreviewCallback {
 	private static final String TAG = "SDL-CAMERA";
 
-	private Camera camera_ = null;
-	private SurfaceHolder surfaceHolder_ = null;
-	private SurfaceView	  surfaceView_;
+	private Camera camera = null;
+	private SurfaceHolder surfaceHolder = null;
+	private SurfaceView surfaceView = null;
 
 	private List<Camera.Size> supportedSizes; 
-	private Camera.Size procSize_;
+	private Camera.Size procSize;
 	private boolean inProcessing = false;
 
 	static CameraFeed instance = null;
 
 	public CameraFeed() {
-		surfaceView_ = new SurfaceView(MainActivity.instance);
-		surfaceHolder_ = surfaceView_.getHolder();
-		surfaceHolder_.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 	}
 
 	public List<Camera.Size> getSupportedPreviewSize() {
@@ -38,73 +36,106 @@ public class CameraFeed implements PreviewCallback {
 	}
 
 	public void StopPreview() {
-		if ( camera_ == null)
+		if ( camera == null)
 			return;
-		camera_.stopPreview();
+		camera.stopPreview();
 	}
 
 	/*
 	public void AutoFocus() {
-		if ( camera_ == null)
+		if ( camera == null)
 			return;
-		camera_.autoFocus(afcb);
+		camera.autoFocus(afcb);
 	}
 	*/
 
 	public void Rotate(int degree) {
-		if ( camera_ == null)
+		if ( camera == null)
 			return;
-		camera_.setDisplayOrientation(degree);
+		camera.setDisplayOrientation(degree);
 	}
 
 	public void Release() {
-		if ( camera_ != null) {
-			camera_.setPreviewCallback(null);
-			camera_.stopPreview();
-			camera_.release();
-			camera_ = null;
+		if ( camera != null) {
+			camera.setPreviewCallback(null);
+			camera.stopPreview();
+			camera.release();
+			camera = null;
+			
+			MainActivity.instance.runOnUiThread(new Runnable() {
+				public void run() {
+					MainActivity.instance._videoLayout.removeView(surfaceView);
+					surfaceView = null;
+					surfaceHolder = null;
+				}
+			});
+			while (surfaceHolder != null) {
+				try { Thread.sleep(100); } catch (Exception e) {}
+			}
 		}
 	}
 	
-	public void setupCamera(int wid, int hei) {
-		camera_ = Camera.open(0);
-		procSize_ = camera_.new Size(0, 0);
-		Camera.Parameters p = camera_.getParameters();
+	public void setupCamera(int wid, int hei, int fps) throws IOException {
+		Log.d(TAG, "setupCamera: " + wid + "x" + hei + " FPS " + fps);
+
+		camera = Camera.open(0);
+		procSize = camera.new Size(0, 0);
+		Camera.Parameters p = camera.getParameters();
 		List<Integer> formats = p.getSupportedPreviewFormats();
 		for (int i = 0; i < formats.size(); i++) {
 			int f = formats.get(i);
-			Log.d(TAG, "format:" + f);
+			Log.d(TAG, "Camera supported format:" + f);
 		}
 		supportedSizes = p.getSupportedPreviewSizes();
 
-		try {
-			camera_.setPreviewDisplay(surfaceHolder_);
-		} catch ( Exception ex) {
-			ex.printStackTrace();
-		}
-
 		int maxDiff = 10000000;
-		procSize_ = supportedSizes.get(0);
+		procSize = supportedSizes.get(0);
 		for (Camera.Size size: supportedSizes) {
+			Log.d(TAG, "Camera supported dimensions: " + size.width + " " + size.height);
 			int diff = Math.abs(size.width - wid) + Math.abs(size.height - hei);
 			if (maxDiff > diff) {
 				maxDiff = diff;
-				procSize_ = size;
+				procSize = size;
 			}
 		}
+		p.setPreviewSize(procSize.width, procSize.height);
 
-		p.setPreviewSize(procSize_.width, procSize_.height);
-		p.setFocusMode(p.FOCUS_MODE_CONTINUOUS_VIDEO);
-		camera_.setParameters(p);
+		List<int[]> fpsRanges = p.getSupportedPreviewFpsRange();
+		int[] fpsAct = fpsRanges.get(0)[0] > fps ? fpsRanges.get(0) : fpsRanges.get(fpsRanges.size() - 1);
+		for (int[] ff: fpsRanges) {
+			Log.d(TAG, "Camera supported FPS range: " + ff[0] + " " + ff[1]);
+			if (ff[0] <= fps && ff[1] >= fps)
+				fpsAct = ff;
+		}
+		p.setPreviewFpsRange(fpsAct[0], fpsAct[1]);
 
-		actualCameraSize(procSize_.width, procSize_.height);
+		//p.setFocusMode(p.FOCUS_MODE_CONTINUOUS_VIDEO); // Not supported on Nexus 7
+		camera.setParameters(p);
 
-		camera_.setPreviewCallback(this);
+		MainActivity.instance.runOnUiThread(new Runnable() {
+			public void run() {
+				surfaceView = new SurfaceView(MainActivity.instance);
+				surfaceHolder = surfaceView.getHolder();
+				surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+				MainActivity.instance._videoLayout.addView(surfaceView, new FrameLayout.LayoutParams(1, 1, Gravity.LEFT | Gravity.TOP));
+				//MainActivity.instance._videoLayout.bringChildToFront(surfaceView);
+			}
+		});
+		while (surfaceHolder == null) {
+			try { Thread.sleep(100); } catch (Exception e) {}
+		}
+		try { Thread.sleep(100); } catch (Exception e) {}
+		actualCameraSize(procSize.width, procSize.height);
+		try { Thread.sleep(200); } catch (Exception e) {}
 
-		camera_.startPreview();
+		camera.setPreviewDisplay(surfaceHolder);
+		camera.setPreviewCallback(this);
+
+		camera.startPreview();
 	}
 
 	public void onPreviewFrame(byte[] frame, Camera c) {
+		//Log.d(TAG, "onPreviewFrame");
 		if ( !inProcessing ) {
 			inProcessing = true;
 			try {
@@ -117,17 +148,26 @@ public class CameraFeed implements PreviewCallback {
 	}
 
 	// Called from native code
-	static public void initCamera(int width, int height)
+	static public void initCamera(int width, int height, int fps)
 	{
-		if (instance == null)
-			instance = new CameraFeed();
-		instance.StopPreview();
-		instance.setupCamera(width, height);
+		Log.d(TAG, "initCamera: " + width + "x" + height + " FPS " + fps);
+		try {
+			if (instance == null)
+				instance = new CameraFeed();
+			instance.setupCamera(width, height, fps * 1000);
+		} catch (Exception e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			Log.w(TAG, "initCamera exception: " + sw.toString());
+		}
+		Log.d(TAG, "initCamera done");
 	}
 
 	// Called from native code
 	static public void deinitCamera()
 	{
+		Log.d(TAG, "deinitCamera");
 		if (instance == null)
 			return;
 		instance.Release();

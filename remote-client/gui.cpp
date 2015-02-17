@@ -232,12 +232,12 @@ static void vncServerCallback(GuiElement_t * elem, bool pressed, int x, int y)
 		}
 		else
 		{
-			vncServerStart();
 			elem->text[0] = "VNC server started on";
 			elem->text[1] = vncServerGetIpAddress();
+			vncServerStart();
 		}
 	}
-	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
+	//GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
 void createGuiMain()
@@ -258,7 +258,7 @@ void createGuiMain()
 	gui.push_back(GuiElement_t("Mid",  VID_X * 0.8 + VID_X * 0.2 / 3,     VID_Y * 0.1, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_MIDDLE>));
 	gui.push_back(GuiElement_t("Down", VID_X * 0.8 + VID_X * 0.2 / 3, VID_Y * 0.1 * 2, VID_X * 0.2 / 3 + 1, VID_Y * 0.1, mouseInputCallback<SDL_BUTTON_WHEELDOWN>));
 	gui.push_back(GuiElement_t("Right",VID_X * 0.8 + VID_X * 0.4 / 3,               0, VID_X * 0.2 / 3 + 1, VID_Y * 0.3, mouseInputCallback<SDL_BUTTON_RIGHT>));
-	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.4, mouseMovementCallback));
+	gui.push_back(GuiElement_t("Mouse - swipe to move", VID_X * 0.6, VID_Y * 0.3, VID_X * 0.5, VID_Y * 0.5, mouseMovementCallback));
 	gui.push_back(GuiElement_t("Mouse speed", VID_X * 0.6, VID_Y * 0.9, VID_X * 0.3, VID_Y * 0.1, mouseSpeedCallback));
 	gui.push_back(GuiElement_t("",     VID_X * 0.9, VID_Y * 0.9, VID_X * 0.1, VID_Y * 0.1, settingsToggleCallback, DrawSettingsImageCallback));
 
@@ -296,7 +296,7 @@ void createGuiMain()
 		"Touch to start",
 		NULL
 	};
-	gui.push_back(GuiElement_t(VNC_SERVER_TEXT, VID_X * 0.6, VID_Y * 0.7, VID_X * 0.5, VID_Y * 0.2, vncServerCallback));
+	gui.push_back(GuiElement_t(VNC_SERVER_TEXT, VID_X * 0.6, VID_Y * 0.8, VID_X * 0.5, VID_Y * 0.1, vncServerCallback));
 
 	FILE * ff = fopen(mouseSpeedSaveFile, "r");
 	if( ff )
@@ -460,6 +460,7 @@ void processGui()
 			gui->at(ii).draw(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
 		}
 	}
+	vncServerDrawVideoBuffer(1, 1, 160, 120);
 }
 
 void mainLoop(bool noHid)
@@ -469,6 +470,12 @@ void mainLoop(bool noHid)
 	while( SDL_PollEvent(&evt) )
 	{
 		lastEvent = SDL_GetTicks();
+		for( int i = 0; i < MAX_POINTERS; i++)
+		{
+			if( touchPointers[i].delayRelease )
+				touchPointers[i].pressed = false;
+			touchPointers[i].delayRelease = false;
+		}
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
 #ifndef __ANDROID__
@@ -505,8 +512,11 @@ void mainLoop(bool noHid)
 		// PC mouse events
 		if( evt.type == SDL_MOUSEBUTTONUP || evt.type == SDL_MOUSEBUTTONDOWN )
 		{
-			// TODO: implement PC input
-			touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].pressed = (evt.button.state == SDL_PRESSED);
+			if( evt.type == SDL_MOUSEBUTTONUP )
+				touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].delayRelease = true; // Unpress the button after one extra loop, so we won't lose quick keypresses
+			else
+				touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].pressed = true;
+			
 			/*
 			if( evt.button.state == SDL_PRESSED )
 				touchPointers[evt.jbutton.button].pressedTime = lastEvent;
