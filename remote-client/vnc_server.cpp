@@ -23,6 +23,9 @@ static int width, height, videoBufferLength;
 static unsigned char *videoBuffer;
 static rfbScreenInfoPtr server;
 
+static void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
+static void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl);
+
 static void onCameraFrame()
 {
 	rfbMarkRectAsModified(server, 0, 0, width, height);
@@ -54,9 +57,11 @@ void vncServerStart()
 			strstr(serialno, "\n")[0] = 0;
 		pclose(ff);
 	}
-	server->desktopName = serialno;
+	server->desktopName = strdup(serialno);
 	server->frameBuffer = (char *)videoBuffer;
 	server->alwaysShared = TRUE;
+	server->ptrAddEvent = mouseEvent;
+	server->kbdAddEvent = keyEvent;
 	rfbInitServer(server);
 	rfbRunEventLoop(server, -1, TRUE);
 	printf("VNC server started");
@@ -66,7 +71,7 @@ void vncServerStop()
 {
 	printf("Stopping VNC server");
 	rfbShutdownServer(server, TRUE);
-	//rfbScreenCleanup(server);
+	//rfbScreenCleanup(server); // TODO: crash here
 	closeCamera();
 	serverRunning = false;
 	videoBuffer = NULL;
@@ -137,6 +142,26 @@ void vncServerDrawVideoBuffer(int x, int y, int w, int h)
 			pixels[ww] = src[srcWidth * ww / w];
 		}
 	}
-
 }
 
+void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
+{
+	int dx = x - server->width / 2;
+	int dy = y - server->height / 2;
+	mouseCoords[0] += dx;
+	mouseCoords[1] += dy;
+	mouseButtons[SDL_BUTTON_LEFT] = (buttonMask & 0x1) != 0;
+	mouseButtons[SDL_BUTTON_MIDDLE] = (buttonMask & 0x2) != 0;
+	mouseButtons[SDL_BUTTON_RIGHT] = (buttonMask & 0x4) != 0;
+	mouseButtons[SDL_BUTTON_WHEELUP] = (buttonMask & 0x8) != 0;
+	mouseButtons[SDL_BUTTON_WHEELDOWN] = (buttonMask & 0x10) != 0;
+	mouseButtons[SDL_BUTTON_X1] = (buttonMask & 0x20) != 0;
+	mouseButtons[SDL_BUTTON_X2] = (buttonMask & 0x40) != 0;
+	processMouseInput();
+	rfbDefaultPtrAddEvent(buttonMask, server->width / 2, server->height / 2, cl);
+	cl->cursorWasMoved = TRUE;
+}
+
+void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl)
+{
+}
