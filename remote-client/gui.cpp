@@ -40,6 +40,8 @@ static std::vector<GuiElement_t> gui;
 
 enum { TOUCHPAD_X0 = 0, TOUCHPAD_Y0 = 0, TOUCHPAD_X1 = int(VID_X * 0.6), TOUCHPAD_Y1 = VID_Y };
 
+SDL_sem *screenRedrawSemaphore = SDL_CreateSemaphore(0);
+
 float getMouseSpeed()
 {
 	return mouseSpeed;
@@ -177,8 +179,8 @@ static void settingsToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 {
 	if( toggleElement(elem, pressed) )
 	{
-		sInsideSettings = true;
 		elem->toggled = false;
+		settingsShowGui();
 		settingsInitGui();
 	}
 }
@@ -219,6 +221,7 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
 
+static const char * VNC_SERVER_START_AT_BOOT = "vnc-server-start-at-boot.flag";
 
 static void vncServerCallback(GuiElement_t * elem, bool pressed, int x, int y)
 {
@@ -229,12 +232,19 @@ static void vncServerCallback(GuiElement_t * elem, bool pressed, int x, int y)
 			elem->text[0] = "VNC server stopped";
 			elem->text[1] = "Touch to start";
 			vncServerStop();
+			remove(VNC_SERVER_START_AT_BOOT);
 		}
 		else
 		{
 			elem->text[0] = "VNC server started on";
 			elem->text[1] = vncServerGetIpAddress();
 			vncServerStart();
+			FILE *ff = fopen(VNC_SERVER_START_AT_BOOT, "w");
+			if(ff)
+			{
+				fprintf(ff, "%s", VNC_SERVER_START_AT_BOOT);
+				fclose(ff);
+			}
 		}
 	}
 	//GuiElement_t::defaultInputCallback(elem, pressed, x, y);
@@ -297,6 +307,7 @@ void createGuiMain()
 		NULL
 	};
 	gui.push_back(GuiElement_t(VNC_SERVER_TEXT, VID_X * 0.6, VID_Y * 0.8, VID_X * 0.5, VID_Y * 0.1, vncServerCallback));
+	GuiElement_t *vncGui = &gui.back();
 
 	FILE * ff = fopen(mouseSpeedSaveFile, "r");
 	if( ff )
@@ -306,7 +317,15 @@ void createGuiMain()
 		fclose(ff);
 		mouseSpeed = atof(s);
 	}
-	//SDL_ShowScreenKeyboard(NULL);
+
+	ff = fopen(VNC_SERVER_START_AT_BOOT, "r");
+	if(ff)
+	{
+		fclose(ff);
+		vncGui->text[0] = "VNC server started on";
+		vncGui->text[1] = vncServerGetIpAddress();
+		vncServerStart();
+	}
 }
 
 static int dialogResult = 0;
@@ -410,6 +429,18 @@ void settingsCloseGui()
 	guiWaitTouchRelease = true;
 }
 
+void settingsShowGui()
+{
+	sInsideSettings = true;
+	guiWaitTouchRelease = true;
+	settingsInitGui();
+}
+
+bool settingsGuiShown()
+{
+	return sInsideSettings;
+}
+
 void processGui()
 {
 	std::vector<GuiElement_t> *gui = &::gui;
@@ -460,7 +491,8 @@ void processGui()
 			gui->at(ii).draw(&gui->at(ii), false, touchPointers[0].x - gui->at(ii).rect.x, touchPointers[0].y - gui->at(ii).rect.y);
 		}
 	}
-	vncServerDrawVideoBuffer(1, 1, 160, 120);
+	if( !settingsGuiShown() )
+		vncServerDrawVideoBuffer(1, 1, 160, 120);
 }
 
 void mainLoop(bool noHid)
@@ -487,7 +519,7 @@ void mainLoop(bool noHid)
 				if( evt.type == SDL_KEYDOWN )
 				{
 					if( sInsideSettings ) // TODO: dialog stack?
-						sInsideSettings = false;
+						settingsCloseGui();
 					else
 						exit(0);
 				}
@@ -500,7 +532,7 @@ void mainLoop(bool noHid)
 				{
 					if( !processKeyInput(evt.key.keysym.sym, evt.key.keysym.unicode, evt.key.state == SDL_PRESSED) )
 					{
-						sInsideSettings = true;
+						settingsShowGui();
 						settingsDefineKeycode(evt.key.keysym.sym, evt.key.keysym.unicode);
 					}
 					else if( evt.key.keysym.unicode != 0 && evt.key.state == SDL_PRESSED )
@@ -516,13 +548,6 @@ void mainLoop(bool noHid)
 				touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].delayRelease = true; // Unpress the button after one extra loop, so we won't lose quick keypresses
 			else
 				touchPointers[evt.jbutton.button - SDL_BUTTON_LEFT].pressed = true;
-			
-			/*
-			if( evt.button.state == SDL_PRESSED )
-				touchPointers[evt.jbutton.button].pressedTime = lastEvent;
-			else
-				touchPointers[evt.jbutton.button].releasedTime = lastEvent;
-			*/
 		}
 		if( evt.type == SDL_MOUSEMOTION )
 		{
@@ -560,6 +585,8 @@ void mainLoop(bool noHid)
 		}
 	}
 
+	SDL_SemTryWait(screenRedrawSemaphore); // Drain the semaphore
+	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
 	processGui();
 	if( !noHid )
 	{
@@ -568,7 +595,7 @@ void mainLoop(bool noHid)
 	}
 
 	SDL_Flip(SDL_GetVideoSurface());
-	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
+	SDL_SemPost(screenRedrawSemaphore);
 
 	if( lastEvent + 1000 < SDL_GetTicks() )
 		SDL_Delay(150);

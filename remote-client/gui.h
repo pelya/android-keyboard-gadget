@@ -92,9 +92,14 @@ void clearDialogText();
 void addDialogUrlButton(const char *url);
 void addDialogYesNoButtons();
 
-void settingsInitGui();
+void settingsShowGui();
 void settingsCloseGui();
+bool settingsGuiShown();
+
 void settingsProcessKeyInput(SDLKey key, unsigned int unicode, int pressed);
 void settingsDefineKeycode(SDLKey key, unsigned int unicode);
+void settingsInitGui();
+
+extern SDL_sem *screenRedrawSemaphore;
 
 #endif

@@ -17,6 +17,8 @@
 #include "vnc_server.h"
 #include "camera.h"
 #include "input.h"
+#include "gui.h"
+#include "vnc_keysyms.h"
 
 static bool serverRunning = false;
 static int width, height, videoBufferLength;
@@ -28,6 +30,25 @@ static void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl);
 
 static void onCameraFrame()
 {
+	if( settingsGuiShown() )
+	{
+		SDL_SemWaitTimeout(screenRedrawSemaphore, 200);
+		// Copy settings GUI to VNC framebuffer
+		Uint32 pitch = SDL_GetVideoSurface()->w;
+		Uint32 dstPitch = server->width;
+		Uint16 *pixels = (Uint16 *)SDL_GetVideoSurface()->pixels;
+		Uint16 *dst = (Uint16 *)videoBuffer;
+		dst += (server->width - SDL_GetVideoSurface()->w) / 2;
+		dst += dstPitch * (server->height - SDL_GetVideoSurface()->h) / 2;
+
+		for(Uint32 y = SDL_GetVideoSurface()->h; y > 0; y--, pixels += pitch, dst += dstPitch)
+		{
+			for (Uint32 x = 0; x < pitch; x++)
+			{
+				dst[x] = pixels[x];
+			}
+		}
+	}
 	rfbMarkRectAsModified(server, 0, 0, width, height);
 }
 
@@ -146,22 +167,114 @@ void vncServerDrawVideoBuffer(int x, int y, int w, int h)
 
 void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 {
-	int dx = x - server->width / 2;
-	int dy = y - server->height / 2;
-	mouseCoords[0] += dx;
-	mouseCoords[1] += dy;
-	mouseButtons[SDL_BUTTON_LEFT] = (buttonMask & 0x1) != 0;
-	mouseButtons[SDL_BUTTON_MIDDLE] = (buttonMask & 0x2) != 0;
-	mouseButtons[SDL_BUTTON_RIGHT] = (buttonMask & 0x4) != 0;
-	mouseButtons[SDL_BUTTON_WHEELUP] = (buttonMask & 0x8) != 0;
-	mouseButtons[SDL_BUTTON_WHEELDOWN] = (buttonMask & 0x10) != 0;
-	mouseButtons[SDL_BUTTON_X1] = (buttonMask & 0x20) != 0;
-	mouseButtons[SDL_BUTTON_X2] = (buttonMask & 0x40) != 0;
-	processMouseInput();
-	rfbDefaultPtrAddEvent(buttonMask, server->width / 2, server->height / 2, cl);
-	cl->cursorWasMoved = TRUE;
+	static int oldX = 0, oldY = 0;
+	if( settingsGuiShown() )
+	{
+		rfbDefaultPtrAddEvent(buttonMask, x, y, cl);
+		int dx = (server->width - SDL_GetVideoSurface()->w) / 2;
+		int dy = (server->height - SDL_GetVideoSurface()->h) / 2;
+		x -= dx;
+		y -= dy;
+		if (x >= 0 && y >= 0 && x < SDL_GetVideoSurface()->w && y < SDL_GetVideoSurface()->h)
+		{
+			touchPointers[0].x = x;
+			touchPointers[0].y = y;
+			touchPointers[0].pressed = (buttonMask & 0x1) != 0;
+		}
+		else
+		{
+			touchPointers[0].pressed = false;
+		}
+	}
+	else
+	{
+		int dx = x - oldX;
+		int dy = y - oldY;
+		//printf("Mouse moved %04d %04d delta %05d %05d", x, y, dx, dy);
+
+		// Stupid clients ignore server command to set pointer coordinates
+#if 0
+		if( abs(x - server->width / 2) + abs(y - server->height / 2) > 300 && abs(dx) + abs(dy) < 50 )
+		{
+			//printf("Moving mouse to %04d %04d", server->width / 2, server->height / 2);
+			x = server->width / 2;
+			y = server->height / 2;
+			rfbDefaultPtrAddEvent(buttonMask, server->width / 2, server->height / 2, cl);
+			cl->cursorWasMoved = TRUE;
+			return;
+		}
+#endif
+
+		oldX = x;
+		oldY = y;
+		rfbDefaultPtrAddEvent(buttonMask, x, y, cl);
+
+		if( abs(dx) + abs(dy) > 100 )
+		{
+			//printf("Mouse warped - ignoring event");
+			return;
+		}
+
+		mouseCoords[0] += dx * getMouseSpeed();
+		mouseCoords[1] += dy * getMouseSpeed();
+		mouseButtons[SDL_BUTTON_LEFT] = (buttonMask & 0x1) != 0;
+		mouseButtons[SDL_BUTTON_MIDDLE] = (buttonMask & 0x2) != 0;
+		mouseButtons[SDL_BUTTON_RIGHT] = (buttonMask & 0x4) != 0;
+		mouseButtons[SDL_BUTTON_WHEELUP] = (buttonMask & 0x8) != 0;
+		mouseButtons[SDL_BUTTON_WHEELDOWN] = (buttonMask & 0x10) != 0;
+		mouseButtons[SDL_BUTTON_X1] = (buttonMask & 0x20) != 0;
+		mouseButtons[SDL_BUTTON_X2] = (buttonMask & 0x40) != 0;
+		processMouseInput();
+	}
 }
 
 void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl)
 {
+	bool keyProcessed = false;
+
+	if( key == XK_Scroll_Lock )
+	{
+		if( !down )
+			return;
+		if( !settingsGuiShown() )
+		{
+			settingsShowGui();
+			return;
+		}
+		else
+		{
+			settingsCloseGui();
+			processKeyInput(SDLK_SCROLLOCK, 0, true);
+			processKeyInput(SDLK_SCROLLOCK, 0, false);
+		}
+		return;
+	}
+
+	SDLKey keysym = SDLK_UNKNOWN;
+	uint32_t unicode = 0;
+
+	if( vncKeysymToSDLKey.count(key) > 0 )
+		keysym = vncKeysymToSDLKey[key];
+	else if( vncKeysymToUnicode.count(key) > 0 )
+		unicode = vncKeysymToUnicode[key];
+
+	if(keysym == SDLK_UNKNOWN && unicode == 0)
+		return;
+
+	if( settingsGuiShown() )
+	{
+		settingsProcessKeyInput(keysym, unicode, down != FALSE);
+		return;
+	}
+
+	if( keysym != SDLK_UNKNOWN )
+		keyProcessed = processKeyInput(keysym, 0, down != FALSE);
+	else if( unicode > 0 )
+		keyProcessed = processKeyInput(SDLK_UNKNOWN, unicode, down != FALSE);
+
+	if( !keyProcessed )
+	{
+		settingsShowGui();
+		settingsDefineKeycode(keysym, unicode);
+	}
 }

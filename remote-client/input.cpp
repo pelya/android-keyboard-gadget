@@ -28,7 +28,7 @@
 #include "gui.h"
 #include "input.h"
 #include "scancodes.h"
-#include "flash-kernel.h"
+#include "flash_kernel.h"
 
 bool keys[MAX_KEYCODES];
 float mouseCoords[2];

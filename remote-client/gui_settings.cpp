@@ -239,11 +239,11 @@ static void settingsInitGuiMainKeys()
 	settingsGui.push_back(GuiElement_t(nokey,   SIZE_X * 13, SIZE_Y * 5, SIZE_X, SIZE_Y, keyDefine<0x00>));
 
 	settingsGui.push_back(GuiElement_t("Ctrl",  SIZE_X * 0,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LCTRL>));
-	settingsGui.push_back(GuiElement_t("Meta",  SIZE_X * 1,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LSUPER>));
+	settingsGui.push_back(GuiElement_t("Super", SIZE_X * 1,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LSUPER>));
 	settingsGui.push_back(GuiElement_t("Alt",   SIZE_X * 2,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_LALT>));
 	settingsGui.push_back(GuiElement_t("Space", SIZE_X * 3,  SIZE_Y * 6, SIZE_X * 4, SIZE_Y, keyDefine<0x2c>));
 	settingsGui.push_back(GuiElement_t("Alt",   SIZE_X * 7,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_RALT>));
-	settingsGui.push_back(GuiElement_t("Meta",  SIZE_X * 8,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_RSUPER>));
+	settingsGui.push_back(GuiElement_t("Super", SIZE_X * 8,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_RSUPER>));
 	settingsGui.push_back(GuiElement_t("Menu",  SIZE_X * 9,  SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x76>));
 	settingsGui.push_back(GuiElement_t("Ctrl",  SIZE_X * 10, SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<KEY_RCTRL>));
 	settingsGui.push_back(GuiElement_t("Left",  SIZE_X * 11, SIZE_Y * 6, SIZE_X, SIZE_Y, keyDefine<0x50>));
