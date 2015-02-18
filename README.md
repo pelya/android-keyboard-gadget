@@ -259,11 +259,3 @@ Horizontal wheel is not supported yet.
 
 See functions outputSendKeys() and outputSendMouse() inside file [input.cpp](remote-client/input.cpp)
 for reference implementation.
-
-What's next
-===========
-
-I'm planning to add remote control functionality, with live camera feed,
-so you can turn your Nexus 7 into an overpriced remote desktop / KVM switch solution.
-
-This seems to be done easiest way by using VNC implementation from xtightvncclient.
