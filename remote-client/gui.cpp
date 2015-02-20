@@ -499,15 +499,17 @@ void mainLoop(bool noHid)
 {
 	static Uint32 lastEvent = 0;
 	SDL_Event evt;
+
+	for( int i = 0; i < MAX_POINTERS; i++)
+	{
+		if( touchPointers[i].delayRelease )
+			touchPointers[i].pressed = false;
+		touchPointers[i].delayRelease = false;
+	}
+
 	while( SDL_PollEvent(&evt) )
 	{
 		lastEvent = SDL_GetTicks();
-		for( int i = 0; i < MAX_POINTERS; i++)
-		{
-			if( touchPointers[i].delayRelease )
-				touchPointers[i].pressed = false;
-			touchPointers[i].delayRelease = false;
-		}
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
 #ifndef __ANDROID__

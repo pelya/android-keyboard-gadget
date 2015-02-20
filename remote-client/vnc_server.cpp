@@ -179,7 +179,10 @@ void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 		{
 			touchPointers[0].x = x;
 			touchPointers[0].y = y;
-			touchPointers[0].pressed = (buttonMask & 0x1) != 0;
+			if( (buttonMask & 0x1) != 0 )
+				touchPointers[0].pressed = true;
+			else
+				touchPointers[0].delayRelease = true;
 		}
 		else
 		{
