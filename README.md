@@ -81,6 +81,11 @@ Sony Xperia Z Ultra
 
 - http://forum.xda-developers.com/showthread.php?t=2926584
 
+Xiaomi Redmi 1S
+---------------
+
+- http://forum.xda-developers.com/showthread.php?t=2998620
+
 Other devices
 -------------
 
