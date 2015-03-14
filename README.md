@@ -59,7 +59,7 @@ OnePlus One
 Galaxy S4
 ---------
 
-- http://forum.xda-developers.com/showthread.php?t=2590246 - you have to enable  in the included STweaks app
+- http://forum.xda-developers.com/showthread.php?t=2590246 - you have to enable it in the included STweaks app
 
 Galaxy Note 2
 -------------
@@ -85,6 +85,11 @@ Xiaomi Redmi 1S
 ---------------
 
 - http://forum.xda-developers.com/showthread.php?t=2998620
+
+Galaxy Ace 2
+------------
+
+- http://forum.xda-developers.com/showthread.php?t=2793420
 
 Other devices
 -------------
