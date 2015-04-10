@@ -79,7 +79,7 @@ Sony Xperia Z3 and Z3 Compact
 Sony Xperia Z Ultra
 -------------------
 
-- http://forum.xda-developers.com/showthread.php?t=2926584
+- http://forum.xda-developers.com/showthread.php?t=3066748
 
 Xiaomi Redmi 1S
 ---------------
