@@ -208,7 +208,7 @@ To compile kernel, launch commands
 	make tegra3_android_defconfig
 	make -j4
 
-Use either [kernel-3.1.patch](kernel-3.1.patch) or [kernel-3.4.patch](kernel-3.4.patch), depending on your kernel version,
+Use either [kernel-3.1.patch](kernel-3.1.patch), [kernel-3.4.patch](kernel-3.4.patch), or [kernel-3.10.patch](kernel-3.10.patch) depending on your kernel version,
 
 To compile *boot.img*, launch commands
 
