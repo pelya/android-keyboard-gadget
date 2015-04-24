@@ -51,6 +51,12 @@ Motorola Moto E with Cyanogenmod
 
 - http://forum.xda-developers.com/showthread.php?t=2931985
 
+Motorola Moto G 2014
+--------------------
+
+- http://forum.xda-developers.com/showthread.php?t=3085277
+
+
 OnePlus One
 -----------
 
