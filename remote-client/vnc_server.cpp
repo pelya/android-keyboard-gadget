@@ -22,11 +22,13 @@
 
 static bool serverRunning = false;
 static int width, height, videoBufferLength;
+static float mouseSpeedX = 0, mouseSpeedY = 0;
 static unsigned char *videoBuffer;
 static rfbScreenInfoPtr server;
 
 static void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
 static void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl);
+static void processMouseBorders();
 
 static void onCameraFrame()
 {
@@ -50,6 +52,7 @@ static void onCameraFrame()
 		}
 	}
 	rfbMarkRectAsModified(server, 0, 0, width, height);
+	processMouseBorders();
 }
 
 void vncServerStart()
@@ -60,6 +63,8 @@ void vncServerStart()
 	serverRunning = true;
 	width = 1280;
 	height = 720;
+	mouseSpeedX = 0;
+	mouseSpeedY = 0;
 	openCamera(&width, &height, 5, &videoBuffer, &videoBufferLength, onCameraFrame);
 	server = rfbGetScreen(NULL, NULL, width, height, 5, 3, 2);
 	// RGB565
@@ -96,6 +101,8 @@ void vncServerStop()
 	closeCamera();
 	serverRunning = false;
 	videoBuffer = NULL;
+	mouseSpeedX = 0;
+	mouseSpeedY = 0;
 	printf("VNC server stopped");
 }
 
@@ -228,6 +235,17 @@ void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 		mouseButtons[SDL_BUTTON_X1] = (buttonMask & 0x20) != 0;
 		mouseButtons[SDL_BUTTON_X2] = (buttonMask & 0x40) != 0;
 		processMouseInput();
+
+		mouseSpeedX = 0;
+		mouseSpeedY = 0;
+		if (x < width / 20)
+			mouseSpeedX = -5 * getMouseSpeed();
+		if (x > width - (width / 20))
+			mouseSpeedX = 5 * getMouseSpeed();
+		if (y < height / 20)
+			mouseSpeedY = -5 * getMouseSpeed();
+		if (y > height - (height / 20))
+			mouseSpeedY = 5 * getMouseSpeed();
 	}
 }
 
@@ -279,5 +297,15 @@ void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl)
 	{
 		settingsShowGui();
 		settingsDefineKeycode(keysym, unicode);
+	}
+}
+
+void processMouseBorders()
+{
+	if( mouseSpeedX != 0 && mouseSpeedY != 0 )
+	{
+		mouseCoords[0] += mouseSpeedX;
+		mouseCoords[1] += mouseSpeedY;
+		processMouseInput();
 	}
 }
