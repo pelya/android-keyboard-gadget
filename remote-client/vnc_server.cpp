@@ -25,6 +25,7 @@ static int width, height, videoBufferLength;
 static float mouseSpeedX = 0, mouseSpeedY = 0;
 static unsigned char *videoBuffer;
 static rfbScreenInfoPtr server;
+enum { MOUSE_SPEED_NEAR_EDGES = 8 };
 
 static void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
 static void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl);
@@ -238,14 +239,15 @@ void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 
 		mouseSpeedX = 0;
 		mouseSpeedY = 0;
+
 		if (x < width / 20)
-			mouseSpeedX = -5 * getMouseSpeed();
+			mouseSpeedX = -MOUSE_SPEED_NEAR_EDGES * getMouseSpeed();
 		if (x > width - (width / 20))
-			mouseSpeedX = 5 * getMouseSpeed();
+			mouseSpeedX = MOUSE_SPEED_NEAR_EDGES * getMouseSpeed();
 		if (y < height / 20)
-			mouseSpeedY = -5 * getMouseSpeed();
+			mouseSpeedY = -MOUSE_SPEED_NEAR_EDGES * getMouseSpeed();
 		if (y > height - (height / 20))
-			mouseSpeedY = 5 * getMouseSpeed();
+			mouseSpeedY = MOUSE_SPEED_NEAR_EDGES * getMouseSpeed();
 	}
 }
 
@@ -302,7 +304,7 @@ void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl)
 
 void processMouseBorders()
 {
-	if( mouseSpeedX != 0 && mouseSpeedY != 0 )
+	if( mouseSpeedX != 0 || mouseSpeedY != 0 )
 	{
 		mouseCoords[0] += mouseSpeedX;
 		mouseCoords[1] += mouseSpeedY;
