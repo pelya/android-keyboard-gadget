@@ -37,6 +37,13 @@ static struct supportedDevices_t
 supportedDevices[] =
 {
 	{
+		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.1.1 ] && echo Matched || $APPDIR/busybox [ \"`getprop ro.product.device`\" = nakasi -a \"`getprop ro.build.version.release`\" = 5.1.1 ] && echo Matched",
+		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/8017463df1fc106852d2d4e2f04a0f26b6008bbe/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
+		"echo '556b568734cc4c29b046a6b6b9a992ca31e09a96  boot.img' | $APPDIR/busybox sha1sum -c",
+		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX && echo Successful\" | su",
+		"rm boot.img"
+	},
+	{
 		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.0.2 ] && echo Matched || $APPDIR/busybox [ \"`getprop ro.product.device`\" = nakasi -a \"`getprop ro.build.version.release`\" = 5.0.2 ] && echo Matched",
 		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/e44670bdcbc8d6a6939e083fcefec067f11094a8/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
 		"echo 'bb164ba3a76a6d2921414414a26c0498b7ce29de  boot.img' | $APPDIR/busybox sha1sum -c",
