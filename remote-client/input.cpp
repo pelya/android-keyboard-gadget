@@ -110,7 +110,7 @@ static void openDevicesSuperuser()
 	if (keyboardFd == -1)
 		return;
 
-	sprintf(cmd, "ls %s && { cat %s & cat > %s ; } || echo Cannot open device ...... \n", DEV_KEYBOARD, DEV_KEYBOARD, DEV_KEYBOARD);
+	sprintf(cmd, "ls %s && %s/busybox nc -f %s || echo Cannot open device ...... \n", DEV_KEYBOARD, getenv("SECURE_STORAGE_DIR"), DEV_KEYBOARD);
 	write(keyboardFd, cmd, strlen(cmd));
 	count = read(keyboardFd, cmd, 11);
 	cmd[11] = 0;
@@ -122,7 +122,7 @@ static void openDevicesSuperuser()
 	if (mouseFd == -1)
 		goto errorKb;
 
-	sprintf(cmd, "ls %s && { cat %s & cat > %s ; } || echo Cannot open device ...... \n", DEV_MOUSE, DEV_MOUSE, DEV_MOUSE);
+	sprintf(cmd, "ls %s && %s/busybox nc -f %s || echo Cannot open device ...... \n", DEV_MOUSE, getenv("SECURE_STORAGE_DIR"), DEV_MOUSE);
 	write(mouseFd, cmd, strlen(cmd));
 	count = read(mouseFd, cmd, 11);
 	cmd[11] = 0;
