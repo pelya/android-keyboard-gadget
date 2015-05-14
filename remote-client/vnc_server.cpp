@@ -25,7 +25,7 @@ static int width, height, videoBufferLength;
 static float mouseSpeedX = 0, mouseSpeedY = 0;
 static unsigned char *videoBuffer;
 static rfbScreenInfoPtr server;
-enum { MOUSE_SPEED_NEAR_EDGES = 8 };
+enum { MOUSE_SPEED_NEAR_EDGES = 10 };
 
 static void mouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
 static void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl);

@@ -142,7 +142,7 @@ int flashCustomKernel()
 	createDialog();
 	addDialogText("You will need a custom kernel to use this app.");
 	addDialogText("Prebuilt kernel is available only for Nexus 7 2012 WiFi");
-	addDialogText("with Android 4.4.4 or 5.0.2.");
+	addDialogText("with Android 4.4.4 or 5.0.2 or 5.1.1.");
 	addDialogText("You will need to compile and install the kernel yourself for other devices.");
 	addDialogText("Compilation instructions are available here:");
 	addDialogText("");

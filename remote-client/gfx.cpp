@@ -77,6 +77,10 @@ void initSDL()
 		exit(1);
 	}
 	SDL_JoystickOpen(0);
+
+	SDL_FillRect(SDL_GetVideoSurface(), NULL, 0);
+	renderString("Opening /dev/hidg0 and /dev/hidg1", VID_X / 2, VID_Y / 2);
+	SDL_Flip(SDL_GetVideoSurface());
 }
 
 void deinitSDL()
