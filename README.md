@@ -102,6 +102,11 @@ LG G2 with Cyanogenmod 12.0
 
 - https://github.com/pelya/android-keyboard-gadget/tree/master/lg-g2
 
+Xiaomi MI3
+----------
+
+- http://forum.xda-developers.com/showthread.php?t=3093399
+
 Other devices
 -------------
 
