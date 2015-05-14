@@ -97,6 +97,11 @@ Galaxy Ace 2
 
 - http://forum.xda-developers.com/showthread.php?t=2793420
 
+LG G2 with Cyanogenmod 12.0
+---------------------------
+
+- https://github.com/pelya/android-keyboard-gadget/tree/master/lg-g2
+
 Other devices
 -------------
 
