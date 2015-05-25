@@ -85,7 +85,7 @@ index 4de9562..b26ea34 100644
  	mutex_unlock(&dev->mutex);
  
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
-index 83a266b..c078968 100644
+index 83a266b..236bdf4 100644
 --- a/drivers/usb/gadget/f_hid.c
 +++ b/drivers/usb/gadget/f_hid.c
 @@ -27,7 +27,9 @@
@@ -197,7 +197,36 @@ index 83a266b..c078968 100644
  	poll_wait(file, &hidg->write_queue, wait);
  
  	if (WRITE_COND)
-@@ -457,13 +522,15 @@ const struct file_operations f_hidg_fops = {
+@@ -347,7 +412,12 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;	/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;	/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -361,6 +431,14 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)		/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)		/* Report protocol */
++				goto respond;
++		}
+ 		goto stall;
+ 		break;
+ 
+@@ -457,13 +535,15 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };
  
@@ -214,7 +243,7 @@ index 83a266b..c078968 100644
  	/* allocate instance-specific interface IDs, and patch descriptors */
  	status = usb_interface_id(c, f);
  	if (status < 0)
-@@ -527,6 +594,7 @@ static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
+@@ -527,6 +607,7 @@ static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
  		goto fail;
  
  	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
@@ -222,7 +251,7 @@ index 83a266b..c078968 100644
  
  	return 0;
  
-@@ -548,12 +616,21 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+@@ -548,12 +629,21 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
  {
  	struct f_hidg *hidg = func_to_hidg(f);
  
@@ -245,7 +274,7 @@ index 83a266b..c078968 100644
  	kfree(hidg->req->buf);
  	usb_ep_free_request(hidg->in_ep, hidg->req);
  
-@@ -589,7 +666,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
+@@ -589,7 +679,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
  /*-------------------------------------------------------------------------*/
  /*                             usb_configuration                           */
  
@@ -254,7 +283,7 @@ index 83a266b..c078968 100644
  			    struct hidg_func_descriptor *fdesc, int index)
  {
  	struct f_hidg *hidg;
-@@ -640,7 +717,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
+@@ -640,7 +730,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
  	return status;
  }
  
