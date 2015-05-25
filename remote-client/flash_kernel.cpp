@@ -38,8 +38,8 @@ supportedDevices[] =
 {
 	{
 		"$APPDIR/busybox [ \"`getprop ro.product.device`\" = grouper -a \"`getprop ro.build.version.release`\" = 5.1.1 ] && echo Matched || $APPDIR/busybox [ \"`getprop ro.product.device`\" = nakasi -a \"`getprop ro.build.version.release`\" = 5.1.1 ] && echo Matched",
-		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/8017463df1fc106852d2d4e2f04a0f26b6008bbe/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
-		"echo '556b568734cc4c29b046a6b6b9a992ca31e09a96  boot.img' | $APPDIR/busybox sha1sum -c",
+		"$APPDIR/wget --no-check-certificate -O boot.img 'https://github.com/pelya/android-keyboard-gadget/blob/b08d8fa3f0476b638dcb4fbf7ec0f7558bf838e3/nexus7-2012-wifi-grouper/boot.img?raw=true' && echo Successful",
+		"echo 'ddab9eb735e3b96596407062afae69f829ba8139  boot.img' | $APPDIR/busybox sha1sum -c",
 		"echo \"$APPDIR/busybox dd if=boot.img of=/dev/block/platform/sdhci-tegra.3/by-name/LNX && echo Successful\" | su",
 		"rm boot.img"
 	},
