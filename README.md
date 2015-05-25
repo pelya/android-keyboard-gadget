@@ -198,33 +198,23 @@ Compilation
 
 You have to run all following commands on Linux. Windows is not supported.
 
-To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ , and launch commands
-
-	git clone https://github.com/pelya/commandergenius.git
-	cd commandergenius
-	git submodule update --init --recursive
-	rm -f project/jni/application/src
-	ln -s hid-pc-keyboard project/jni/application/src
-	./changeAppSettings.sh -a
-	android update project -p project
-
-Add string `<uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>` to file `project/AndroidManifest.xml`, and launch `./build.sh`
-
 To compile kernel, launch commands
 
-	git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6
+	git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8
 	git clone https://android.googlesource.com/kernel/tegra.git
-	export PATH=`pwd`/arm-eabi-4.6/bin:$PATH
+	export PATH=`pwd`/arm-eabi-4.8/bin:$PATH
 	export ARCH=arm
 	export SUBARCH=arm
 	export CROSS_COMPILE=arm-eabi-
 	cd tegra
-	git checkout android-tegra3-grouper-3.1-kitkat-mr1
+	git checkout android-tegra3-grouper-3.1-lollipop-mr1
 	patch -p1 < ../kernel-3.1.patch
 	make tegra3_android_defconfig
 	make -j4
 
-Use either [kernel-3.1.patch](kernel-3.1.patch), [kernel-3.4.patch](kernel-3.4.patch), or [kernel-3.10.patch](kernel-3.10.patch) depending on your kernel version,
+Use either [kernel-3.1.patch](kernel-3.1.patch), [kernel-3.4.patch](kernel-3.4.patch),
+[kernel-3.10-nexus6.patch](kernel-3.10-nexus6.patch), or [kernel-3.10-nexus9.patch](kernel-3.10-nexus9.patch),
+depending on your kernel version.
 
 To compile *boot.img*, launch commands
 
@@ -241,15 +231,20 @@ To compile *boot.img*, launch commands
 
 You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
 
+To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ , and launch commands
+
+	git clone https://github.com/pelya/commandergenius.git
+	cd commandergenius
+	git submodule update --init --recursive
+	rm -f project/jni/application/src
+	ln -s hid-pc-keyboard project/jni/application/src
+	./changeAppSettings.sh -a
+	android update project -p project
+
 How it works
 ============
 
-The custom kernel you have compiled with patch [kernel-3.1.patch](kernel-3.1.patch) or [kernel-3.4.patch](kernel-3.4.patch),
-adds two new devices, /dev/hidg0 for keyboard, and /dev/hidg1 for mouse.
-
-The patch [ueventd.patch](ueventd.patch) is only needed to set write permissions on these files -
-if your device is rooted, USB Keyboard app will attempt to modify permissions on these files on start,
-so you generally may skip this patch.
+The custom kernel you have compiled adds two new devices, /dev/hidg0 for keyboard, and /dev/hidg1 for mouse.
 
 You can open these two files, using open() system call,
 and write raw keyboard/mouse events there, using write() system call,
