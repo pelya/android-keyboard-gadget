@@ -237,7 +237,6 @@ To compile *boot.img*, launch commands
 	repo init -u https://android.googlesource.com/platform/manifest -b android-4.4.2_r1
 	repo sync
 	cp -f ../tegra/arch/arm/boot/zImage device/asus/grouper/kernel
-	patch -p1 < ../ueventd.patch
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
 You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
