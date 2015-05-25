@@ -199,6 +199,35 @@ index b211342..de125185 100644
  	poll_wait(file, &hidg->write_queue, wait);
  
  	if (WRITE_COND)
+@@ -347,7 +412,12 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;	/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;	/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -361,6 +431,14 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)		/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)		/* Report protocol */
++				goto respond;
++		}
+ 		goto stall;
+ 		break;
+ 
 @@ -448,13 +513,15 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };

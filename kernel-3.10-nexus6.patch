@@ -1,38 +1,8 @@
-From 717820574352595c88785d776972bcf748aaa24d Mon Sep 17 00:00:00 2001
-From: binkybear <binkybear@nethunter.com>
-Date: Wed, 26 Nov 2014 20:18:20 -0600
-Subject: [PATCH] HID Keyboard test patch for Nexus 9
-
-Testing HID keyboard on the Nexus.  Stole some of the code from the Nexus 10 patch but it may need another line in android.c.  Just testing for now.
-
-Signed-off-by: binkybear <binkybear@nethunter.com>
----
- drivers/usb/gadget/Makefile                 |  5 +-
- drivers/usb/gadget/android.c                | 41 ++++++++++++++
- drivers/usb/gadget/f_hid.c                  | 85 +++++++++++++++++++++++++++--
- drivers/usb/gadget/f_hid.h                  | 16 ++++++
- drivers/usb/gadget/f_hid_android_keyboard.c | 44 +++++++++++++++
- drivers/usb/gadget/f_hid_android_mouse.c    | 40 ++++++++++++++
- 6 files changed, 226 insertions(+), 5 deletions(-)
- create mode 100644 drivers/usb/gadget/f_hid.h
- create mode 100644 drivers/usb/gadget/f_hid_android_keyboard.c
- create mode 100644 drivers/usb/gadget/f_hid_android_mouse.c
-
 diff --git a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
-index e8b7e7c..cc22dc3 100644
+index 90ce82f..b1b99e7 100644
 --- a/drivers/usb/gadget/Makefile
 +++ b/drivers/usb/gadget/Makefile
-@@ -1,6 +1,9 @@
- #
- # USB peripheral controller drivers
- #
-+KBUILD_CFLAGS += -w
-+KBUILD_CFLAGS += -Wno-error=unused-but-set-variable
-+
- GCOV_PROFILE_tegra_udc.o := y
- 
- ccflags-$(CONFIG_USB_GADGET_DEBUG) := -DDEBUG
-@@ -72,7 +75,7 @@ g_nokia-y			:= nokia.o
+@@ -67,7 +67,7 @@ g_nokia-y			:= nokia.o
  g_webcam-y			:= webcam.o
  g_ncm-y				:= ncm.o
  g_acm_ms-y			:= acm_ms.o
@@ -42,21 +12,21 @@ index e8b7e7c..cc22dc3 100644
  
  obj-$(CONFIG_USB_ZERO)		+= g_zero.o
 diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
-index 2ed873b..3940901 100644
+index dd3d3be..fea77b8 100644
 --- a/drivers/usb/gadget/android.c
 +++ b/drivers/usb/gadget/android.c
-@@ -43,6 +43,9 @@
- #include "f_rmnet.c"
+@@ -62,6 +62,9 @@
+ #include "f_ccid.c"
  #include "f_mtp.c"
  #include "f_accessory.c"
 +#include "f_hid.h"
 +#include "f_hid_android_keyboard.c"
 +#include "f_hid_android_mouse.c"
- #define USB_ETH_RNDIS y
  #include "f_rndis.c"
  #include "rndis.c"
-@@ -1406,6 +1409,41 @@ static struct android_usb_function modem_function = {
- 	.bind_config	= modem_function_bind_config,
+ #include "f_qc_ecm.c"
+@@ -2692,6 +2695,41 @@ static struct android_usb_function usbnet_function = {
+ 	.ctrlrequest	= usbnet_function_ctrlrequest,
  };
  
 +static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
@@ -96,24 +66,24 @@ index 2ed873b..3940901 100644
 +
  static struct android_usb_function *supported_functions[] = {
  	&ffs_function,
- 	&mtp_function,
-@@ -1422,6 +1460,7 @@ static struct android_usb_function *supported_functions[] = {
- 	&diag_function,
+ 	&mbim_function,
+@@ -2720,6 +2758,7 @@ static struct android_usb_function *supported_functions[] = {
+ #ifdef CONFIG_SND_PCM
+ 	&audio_source_function,
  #endif
- 	&rmnet_function,
-+	&hid_function,
++       &hid_function,
+ 	&uasp_function,
+ 	&usbnet_function,
  	NULL
- };
- 
-@@ -1617,6 +1656,8 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 							   name, err);
+@@ -3072,6 +3111,8 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 		}
  	}
  
-+	android_enable_function(dev, "hid");
-+
- 	mutex_unlock(&dev->mutex);
- 
- 	return size;
++	/* HID driver always enabled, it's the whole point of this kernel patch */
++	android_enable_function(dev, conf, "hid");
+ 	/* Free uneeded configurations if exists */
+ 	while (curr_conf->next != &dev->configs) {
+ 		conf = list_entry(curr_conf->next,
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
 index 6e69a8e..c5959d4 100644
 --- a/drivers/usb/gadget/f_hid.c
@@ -228,6 +198,35 @@ index 6e69a8e..c5959d4 100644
  	poll_wait(file, &hidg->write_queue, wait);
  
  	if (WRITE_COND)
+@@ -347,7 +412,12 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;	/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;	/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -361,6 +431,14 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)		/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)		/* Report protocol */
++				goto respond;
++		}
+ 		goto stall;
+ 		break;
+ 
 @@ -560,13 +625,15 @@ const struct file_operations f_hidg_fops = {
  	.llseek		= noop_llseek,
  };
@@ -294,7 +293,7 @@ index 6e69a8e..c5959d4 100644
  {
  	int status;
  	dev_t dev;
-diff --git a/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
+diff --git a/b/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
 new file mode 100644
 index 0000000..ad3527a
 --- /dev/null
@@ -316,7 +315,7 @@ index 0000000..ad3527a
 +void ghid_cleanup(void);
 +
 +#endif
-diff --git a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
+diff --git a/b/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
 new file mode 100644
 index 0000000..1824bdd
 --- /dev/null
@@ -366,7 +365,7 @@ index 0000000..1824bdd
 +		0xc0		/* END_COLLECTION                         */
 +	}
 +};
-diff --git a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
+diff --git a/b/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
 new file mode 100644
 index 0000000..075d125
 --- /dev/null
