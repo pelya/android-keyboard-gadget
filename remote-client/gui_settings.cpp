@@ -147,7 +147,7 @@ void settingsProcessKeyInput(SDLKey sdlkey, unsigned int unicode, int pressed)
 	if( sCurrentScancode != 0 && pressed )
 	{
 		int code = -int(sdlkey);
-		if( unicode != 0 )
+		if( unicode >= 0x80 )
 			code = unicode;
 		keyMappings[code] = sCurrentScancode;
 		saveKeyMappings();
@@ -159,7 +159,7 @@ void settingsDefineKeycode(SDLKey key, unsigned int unicode)
 {
 	sCurrentScancode = 0;
 	sDefineUnknownKeycode = -int(key);
-	if( unicode != 0 )
+	if( unicode >= 0x80 )
 		sDefineUnknownKeycode = unicode;
 	settingsInitGui();
 }

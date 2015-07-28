@@ -300,7 +300,7 @@ bool processKeyInput(SDLKey sdlkey, unsigned int unicode, bool pressed)
 {
 	//printf("processKeyInput: %d %s pressed %d", sdlkey, SDL_GetKeyName(sdlkey), pressed);
 	int code = -int(sdlkey);
-	if( unicode != 0 )
+	if( unicode >= 0x80 )
 		code = unicode;
 	std::map<int, int>::const_iterator scan = keyMappings.find(code);
 	if( scan == keyMappings.end() )

@@ -292,7 +292,7 @@ void keyEvent(rfbBool down, rfbKeySym key, rfbClientPtr cl)
 
 	if( keysym != SDLK_UNKNOWN )
 		keyProcessed = processKeyInput(keysym, 0, down != FALSE);
-	else if( unicode > 0 )
+	else if( unicode >= 0x80 )
 		keyProcessed = processKeyInput(SDLK_UNKNOWN, unicode, down != FALSE);
 
 	if( !keyProcessed )
