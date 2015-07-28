@@ -126,7 +126,7 @@ This is done using [hid-gadget-test](hid-gadget-test/hid-gadget-test?raw=true) u
 
 First, copy this utility to your device.
 
-	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
+	adb push hid-gadget-test /data/local/tmp
 	adb shell chmod 755 /data/local/tmp/hid-gadget-test
 
 You will need to set world-writable permissions on /dev/hidg0, or run hid-gadget-test from root shell.
