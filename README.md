@@ -122,11 +122,12 @@ Scripting
 =========
 
 There is a possibility to send keypresses in an automated way, using terminal emulator for Android or similar app.
-This is done using [hid-gadget-test](hid-gadget-test/hid-gadget-test) utility.
+This is done using [hid-gadget-test](hid-gadget-test/hid-gadget-test?raw=true) utility.
 
 First, copy this utility to your device.
 
 	adb push hid-gadget-test/hid-gadget-test /data/local/tmp
+	adb shell chmod 755 /data/local/tmp hid-gadget-test
 
 You will need to set world-writable permissions on /dev/hidg0, or run hid-gadget-test from root shell.
 
