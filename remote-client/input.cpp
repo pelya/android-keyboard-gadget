@@ -152,6 +152,11 @@ static void changeDevicePermissions()
 	system(cmd);
 }
 
+static void disableSelinux()
+{
+	system("echo setenforce 0 | su");
+}
+
 static int deviceExist(const char *path)
 {
 	struct stat st;
@@ -178,6 +183,7 @@ void openInput()
 	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 	{
+		disableSelinux();
 		openDevicesSuperuser();
 	}
 	if( (keyboardFd == -1 || mouseFd == -1) )
