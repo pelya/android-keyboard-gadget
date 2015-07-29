@@ -15,6 +15,8 @@ import java.io.*;
 import java.util.*;
 import java.nio.ByteBuffer;
 
+import remote.hid.keyboard.client.MainActivity;
+
 public class CameraFeed implements PreviewCallback {
 	private static final String TAG = "SDL-CAMERA";
 

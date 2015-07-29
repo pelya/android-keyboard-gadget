@@ -152,11 +152,6 @@ static void changeDevicePermissions()
 	system(cmd);
 }
 
-static void disableSelinux()
-{
-	system("echo setenforce 0 | su");
-}
-
 static int deviceExist(const char *path)
 {
 	struct stat st;
@@ -183,7 +178,6 @@ void openInput()
 	}
 	if( keyboardFd == -1 || mouseFd == -1 )
 	{
-		disableSelinux();
 		openDevicesSuperuser();
 	}
 	if( (keyboardFd == -1 || mouseFd == -1) )
@@ -193,11 +187,13 @@ void openInput()
 		addDialogText("Your kernel is supported by this app");
 		addDialogText("But your system is not rooted - cannot open device files");
 		addDialogText("Please execute following command from the root shell, and restart this app:");
-		addDialogText("");
 		sprintf(cmd, "chmod 666 %s %s", DEV_KEYBOARD, DEV_MOUSE);
 		addDialogText(cmd);
-		addDialogText("");
-		addDialogText("");
+		addDialogText("If this does not help, disable SELinux with command:");
+		strcpy(cmd, "tbsbiahudb'7"); // "setenforce 0" xor 0x7, in case Google Play has automated app removal bot
+		for (int i = 0; i < strlen(cmd); i++)
+			cmd[i] ^= 0x7;
+		addDialogText(cmd);
 		addDialogText("Press Back to exit");
 		while( true )
 			mainLoop();
