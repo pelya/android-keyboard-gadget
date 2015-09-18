@@ -194,6 +194,10 @@ If you need to crack a PIN code, but the target system loses keypresses (happens
 there is a [handy app](send-pin-with-camera/) for that,
 which uses camera to check if each keypress is recognized.
 
+You can also run DuckyScript files used by USB Rubber Ducky keystroke injection tool,
+with the help of [this neat shell script](https://github.com/anbud/DroidDucky).
+
+
 Compilation
 ===========
 
