@@ -113,6 +113,11 @@ Xiaomi MI3
 
 - http://forum.xda-developers.com/showthread.php?t=3093399
 
+Galaxy Note 4
+-------------
+
+- http://www.echoerom.com/ael-kernels/
+
 Other devices
 -------------
 
