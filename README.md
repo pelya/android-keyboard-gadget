@@ -203,10 +203,10 @@ You can also run DuckyScript files used by USB Rubber Ducky keystroke injection 
 with the help of [this neat shell script](https://github.com/anbud/DroidDucky).
 
 
-Compilation
-===========
+Compiling kernel
+================
 
-You have to run all following commands on Linux. Windows is not supported.
+You have to run all following commands on Linux. Windows is not supported. These instructions are for Nexus 7 2012, change them for your device accordingly.
 
 To compile kernel, launch commands
 
@@ -240,6 +240,41 @@ To compile *boot.img*, launch commands
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
 You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
+
+Nexus 7 2012 does not put any SELinux restrictions on the files inside /dev,
+however most other devices typically restrict all access inside /dev for apps,
+which means you will be able to use `hid-gadget-test` command from the root shell,
+but the Android app will fail to launch.
+
+SELinux can be temporarily disabled with a command
+
+	setenforce 0
+
+however this will considerably weaken your device security,
+so it's better to add specific SELinux exception for `/dev/hidg0` and `/dev/hidg1`.
+
+SELinux rules can be found at path
+
+	device/asus/grouper/sepolicy
+
+Replace `asus/grouper` with your device manufacturer/model, then add following lines to SELinux rules.
+
+In file device.te (the declaration of SELinux security context type):
+
+	type hid_gadget_device, dev_type;
+
+In file file_contexts (binding the device paths to the security context):
+
+	# USB Gadget
+	/dev/hidg(.*)                        u:object_r:hid_gadget_device:s0
+
+In file app.te (the rule itself to allow apps using this security context):
+
+	allow appdomain hid_gadget_device:chr_file rw_file_perms;
+
+
+Compiling USB Keyboard app
+==========================
 
 To compile USB Keyboard app, install Android SDK and NDK from site http://developer.android.com/ , and launch commands
 
