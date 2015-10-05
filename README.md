@@ -259,16 +259,16 @@ SELinux rules can be found at path
 
 Replace `asus/grouper` with your device manufacturer/model, then add following lines to SELinux rules.
 
-In file device.te (the declaration of SELinux security context type):
+In file `device.te` - the declaration of SELinux security context type:
 
 	type hid_gadget_device, dev_type;
 
-In file file_contexts (binding the device paths to the security context):
+In file `file_contexts` - binding the device paths to the security context:
 
 	# USB Gadget
 	/dev/hidg(.*)                        u:object_r:hid_gadget_device:s0
 
-In file app.te (the rule itself to allow apps using this security context):
+In file `app.te` - the rule itself to allow apps using this security context:
 
 	allow appdomain hid_gadget_device:chr_file rw_file_perms;
 
