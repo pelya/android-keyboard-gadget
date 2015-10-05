@@ -13,7 +13,7 @@ Nexus 7 2012 WiFi (Grouper)
 - Copy appropriate fastboot executable from the directory `fastboot`.
 - Launch command `fastboot oem unlock`
 - Confirm unlock action by pressing Power button. This will factory reset your device.
-- Copy *boot.img* from directory [nexus7-2012-wifi-grouper](nexus7-2012-wifi-grouper).
+- Copy `boot.img` from directory [nexus7-2012-wifi-grouper](nexus7-2012-wifi-grouper).
 - Launch command `fastboot flash boot boot.img`.
 - Reboot your device using Power button.
 - Install and run USB Keyboard app.
@@ -226,7 +226,7 @@ Use either [kernel-3.1.patch](kernel-3.1.patch), [kernel-3.4.patch](kernel-3.4.p
 [kernel-3.10-nexus6.patch](kernel-3.10-nexus6.patch), or [kernel-3.10-nexus9.patch](kernel-3.10-nexus9.patch),
 depending on your kernel version.
 
-To compile *boot.img*, launch commands
+To compile `boot.img`, launch commands
 
 	mkdir ~/bin
 	export PATH=~/bin:$PATH
@@ -239,7 +239,7 @@ To compile *boot.img*, launch commands
 	cp -f ../tegra/arch/arm/boot/zImage device/asus/grouper/kernel
 	make -j4 TARGET_PRODUCT=aosp_grouper TARGET_BUILD_VARIANT=userdebug
 
-You then can find *boot.img* in directory `aosp/out/target/product/grouper`.
+You then can find `boot.img` in directory `aosp/out/target/product/grouper`.
 
 Nexus 7 2012 does not put any SELinux restrictions on the files inside /dev,
 however most other devices typically restrict all access inside /dev for apps,
@@ -271,6 +271,8 @@ In file `file_contexts` - binding the device paths to the security context:
 In file `app.te` - the rule itself to allow apps using this security context:
 
 	allow appdomain hid_gadget_device:chr_file rw_file_perms;
+
+Then recompile `boot.img`.
 
 
 Compiling USB Keyboard app
