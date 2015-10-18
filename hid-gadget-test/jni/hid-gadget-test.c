@@ -335,8 +335,7 @@ void print_options(char c)
 		for (i = 0; mmod[i].opt != NULL; i++)
 			printf("\t\t%s\n", mmod[i].opt);
 		printf("\n	mouse values:\n"
-		       "		Two signed numbers\n"
-		       "--quit to close\n");
+		       "		Two signed numbers\n\n");
 	} else {
 		printf("	joystick options:\n");
 		for (i = 0; jmod[i].opt != NULL; i++)
@@ -362,6 +361,11 @@ int main(int argc, const char *argv[])
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s devname mouse|keyboard|joystick\n",
 			argv[0]);
+
+		print_options('k');
+		print_options('m');
+		print_options('j');
+
 		return 1;
 	}
 
@@ -374,8 +378,6 @@ int main(int argc, const char *argv[])
 		perror(filename);
 		return 3;
 	}
-
-	print_options(argv[2][0]);
 
 	while (42) {
 
