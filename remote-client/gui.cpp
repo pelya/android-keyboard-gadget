@@ -170,7 +170,20 @@ static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 {
 #ifdef __ANDROID__
 	if( toggleElement(elem, pressed) )
-		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+	{
+		static int keyboard = 0;
+		keyboard++;
+		if (keyboard > 2)
+			keyboard = 0;
+		SDL_HideScreenKeyboard(NULL);
+		//SDL_Delay(150);
+		SDL_Flip(SDL_GetVideoSurface());
+		SDL_Delay(150);
+		if (keyboard == 1)
+			SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+		if (keyboard == 2)
+			SDL_ANDROID_ToggleInternalScreenKeyboard(SDL_KEYBOARD_QWERTY);
+	}
 #endif
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }
@@ -210,12 +223,7 @@ static void ProcessClipboardImageCallback(GuiElement_t * elem, bool pressed, int
 #ifdef __ANDROID__
 		char buf[1024];
 		SDL_ANDROID_GetClipboardText(buf, sizeof(buf));
-		const char *pos = buf;
-		for( unsigned int key = UnicodeFromUtf8(&pos); key != 0; key = UnicodeFromUtf8(&pos) )
-		{
-			processKeyInput((SDLKey)key, 0, 1);
-			processKeyInput((SDLKey)key, 0, 0);
-		}
+		queueKeyTextString(buf);
 #endif
 	}
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
@@ -512,6 +520,7 @@ void mainLoop(bool noHid)
 		lastEvent = SDL_GetTicks();
 		if( evt.type == SDL_KEYUP || evt.type == SDL_KEYDOWN )
 		{
+			//printf("Got key %d %d", evt.key.keysym.sym, evt.key.state == SDL_PRESSED);
 #ifndef __ANDROID__
 			if( (evt.key.keysym.unicode & 0xFF80) == 0 )
 				evt.key.keysym.unicode = 0; // That's how Android sends keypresses
@@ -599,6 +608,8 @@ void mainLoop(bool noHid)
 	SDL_Flip(SDL_GetVideoSurface());
 	SDL_SemPost(screenRedrawSemaphore);
 
-	if( lastEvent + 1000 < SDL_GetTicks() )
+	if( processQueuedKeyTextString() )
+		SDL_Delay(50);
+	else if( lastEvent + 1000 < SDL_GetTicks() )
 		SDL_Delay(150);
 }

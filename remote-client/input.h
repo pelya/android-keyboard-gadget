@@ -43,7 +43,10 @@ extern std::set<int> keyMappingsShift, keyMappingsCtrl, keyMappingsAlt;
 
 void openInput();
 bool processKeyInput(SDLKey key, unsigned int unicode, bool pressed);
+bool processKeyInput(SDLKey key, unsigned int unicode, bool pressed);
 void processMouseInput();
+void queueKeyTextString(const char *s);
+int processQueuedKeyTextString();
 
 void saveKeyMappings();
 

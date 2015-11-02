@@ -61,7 +61,20 @@ static void keyboardToggleCallback(GuiElement_t * elem, bool pressed, int x, int
 {
 #ifdef __ANDROID__
 	if( GuiElement_t::toggleElement(elem, pressed) )
-		SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+	{
+		static int keyboard = 0;
+		keyboard++;
+		if (keyboard > 2)
+			keyboard = 0;
+		SDL_HideScreenKeyboard(NULL);
+		//SDL_Delay(150);
+		SDL_Flip(SDL_GetVideoSurface());
+		SDL_Delay(150);
+		if (keyboard == 1)
+			SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
+		if (keyboard == 2)
+			SDL_ANDROID_ToggleInternalScreenKeyboard(SDL_KEYBOARD_QWERTY);
+	}
 #endif
 	GuiElement_t::defaultInputCallback(elem, pressed, x, y);
 }

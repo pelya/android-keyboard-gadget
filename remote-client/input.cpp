@@ -29,6 +29,7 @@
 #include "input.h"
 #include "scancodes.h"
 #include "flash_kernel.h"
+#include "tools.h"
 
 bool keys[MAX_KEYCODES];
 float mouseCoords[2];
@@ -112,18 +113,20 @@ static void openDevicesSuperuser()
 
 	sprintf(cmd, "ls %s && %s/busybox nc -f %s || echo Cannot open device ...... \n", DEV_KEYBOARD, getenv("SECURE_STORAGE_DIR"), DEV_KEYBOARD);
 	write(keyboardFd, cmd, strlen(cmd));
+	SDL_Flip(SDL_GetVideoSurface());
 	count = read(keyboardFd, cmd, 11);
 	cmd[11] = 0;
 	printf("openDevicesSuperuser(): su returned: %s", cmd);
 	if (count < 0 || strstr(cmd, DEV_KEYBOARD) == NULL)
 		goto errorKb;
-
+	SDL_Flip(SDL_GetVideoSurface());
 	mouseFd = runSu();
 	if (mouseFd == -1)
 		goto errorKb;
 
 	sprintf(cmd, "ls %s && %s/busybox nc -f %s || echo Cannot open device ...... \n", DEV_MOUSE, getenv("SECURE_STORAGE_DIR"), DEV_MOUSE);
 	write(mouseFd, cmd, strlen(cmd));
+	SDL_Flip(SDL_GetVideoSurface());
 	count = read(mouseFd, cmd, 11);
 	cmd[11] = 0;
 	if (count < 0 || strstr(cmd, DEV_MOUSE) == NULL)
@@ -150,6 +153,7 @@ static void changeDevicePermissions()
 	sprintf(cmd, "echo chmod 600 %s %s | su", DEV_KEYBOARD, DEV_MOUSE);
 	printf("%s: %s", __func__, cmd);
 	system(cmd);
+	SDL_Flip(SDL_GetVideoSurface());
 }
 
 static int deviceExist(const char *path)
@@ -455,4 +459,29 @@ void saveKeyMappings()
 	for( std::set<int>::const_iterator it = keyMappingsAlt.begin(); it != keyMappingsAlt.end(); it++ )
 		fprintf(ff, "%d\n", *it);
 	fclose(ff);
+}
+
+static char queuedTextString[1024] = "";
+
+void queueKeyTextString(const char *s)
+{
+	strncpy(queuedTextString, s, sizeof(queuedTextString) - 1);
+	queuedTextString[sizeof(queuedTextString) - 1] = 0;
+}
+
+int processQueuedKeyTextString()
+{
+	char *pos = queuedTextString;
+	if (pos[0] == 0)
+		return 0;
+	unsigned int key = UnicodeFromUtf8(&pos);
+	if (key == (unsigned)-1)
+	{
+		pos[0] = 0;
+		return 0;
+	}
+	processKeyInput((SDLKey)(key & 0x7f), key, 1);
+	processKeyInput((SDLKey)(key & 0x7f), key, 0);
+	memmove(queuedTextString, pos, strlen(pos) + 1);
+	return 1;
 }

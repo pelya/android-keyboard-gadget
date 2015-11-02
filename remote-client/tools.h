@@ -58,7 +58,7 @@ static inline int UnicodeToUtf8(unsigned int src, char * dest)
  * 0. Otherwise the conversion fails, {@code errno} is set to
  * {@code EILSEQ} and the function returns -1.
  */
-static inline int unicode_from_utf8(const char **pstart, const char *end, unsigned int *pcp) {
+static inline int unicode_from_utf8(char **pstart, const char *end, unsigned int *pcp) {
         size_t len, i;
         unsigned int cp, min;
         const char *buf;
@@ -115,7 +115,7 @@ error:
         return -1;
 }
 
-static inline unsigned int UnicodeFromUtf8(const char **src)
+static inline unsigned int UnicodeFromUtf8(char **src)
 {
 	unsigned int ret = 0;
 	const char *end = *src + strlen(*src);
