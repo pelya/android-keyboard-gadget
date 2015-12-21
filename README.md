@@ -118,6 +118,11 @@ Galaxy Note 4
 
 - http://www.echoerom.com/ael-kernels/
 
+Asus Zenfone 2 ZE551ML
+----------------------
+
+- https://github.com/pelya/android-keyboard-gadget/asus-Zenfone-2-ZE551ML/boot.img?raw=true
+
 Other devices
 -------------
 
