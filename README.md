@@ -121,7 +121,7 @@ Galaxy Note 4
 Asus Zenfone 2 ZE551ML
 ----------------------
 
-- https://github.com/pelya/android-keyboard-gadget/asus-Zenfone-2-ZE551ML/boot.img?raw=true
+- https://github.com/pelya/android-keyboard-gadget/blob/master/asus-Zenfone-2-ZE551ML/boot.img?raw=true
 
 Other devices
 -------------
