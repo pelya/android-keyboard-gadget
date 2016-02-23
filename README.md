@@ -123,6 +123,11 @@ Asus Zenfone 2 ZE551ML
 
 - https://github.com/pelya/android-keyboard-gadget/blob/master/asus-Zenfone-2-ZE551ML/boot.img?raw=true
 
+Sony Xperia Z5 Premium E6853
+----------------------------
+
+- https://github.com/pelya/android-keyboard-gadget/blob/master/sony-xperia-z5p/boot.img?raw=true
+
 Other devices
 -------------
 
