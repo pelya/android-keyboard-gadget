@@ -128,6 +128,11 @@ Sony Xperia Z5 Premium E6853
 
 - https://github.com/pelya/android-keyboard-gadget/blob/master/sony-xperia-z5p/boot.img?raw=true
 
+Xiaomi Redmi 2
+--------------
+
+- http://forum.xda-developers.com/redmi-2/development/kernel-berserk-kernel-t3325044
+
 Other devices
 -------------
 
