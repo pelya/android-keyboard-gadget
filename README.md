@@ -208,7 +208,29 @@ Advanced examples.
 	echo --hold --b1 0 -50 | ./hid-gadget-test /dev/hidg1 mouse
 	echo --b1 | ./hid-gadget-test /dev/hidg1 mouse
 
-Here is [the list of keys that this utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
+You can check the modification time of file `/sys/devices/virtual/hidg/hidg0/dev`
+to know when the USB cable has been plugged into PC, however this does not always work,
+so it's better to simply check if hid-gadget-test returned an error.
+
+Here's a sample shell script that will send a predefined key sequence when USB cable is plugged into PC:
+
+	#!/system/bin/sh
+	while true; do
+		until echo volume-up | ./hid-gadget-test /dev/hidg0 keyboard >/dev/null 2>&1; do
+			sleep 2
+		done
+		echo "USB cable plugged"
+		sleep 1
+		for C in 'left-meta r' c m d enter s t a r t space i e x p l o r e space x x x period c o m enter \
+			; do echo "$C" ; sleep 0.3 ; done | ./hid-gadget-test /dev/hidg0 keyboard
+		echo "Done sending commands"
+		while echo volume-up | ./hid-gadget-test /dev/hidg0 keyboard >/dev/null 2>&1; do
+			sleep 2
+		done
+		echo "USB cable unplugged"
+	done
+
+Here is [the list of keys that hid-gadget-test utility supports](hid-gadget-test/jni/hid-gadget-test.c#L33)
 
 If you need to crack a PIN code, but the target system loses keypresses (happens in MacOS BIOS),
 there is a [handy app](send-pin-with-camera/) for that,
