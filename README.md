@@ -133,6 +133,11 @@ Xiaomi Redmi 2
 
 - http://forum.xda-developers.com/redmi-2/development/kernel-berserk-kernel-t3325044
 
+Sony Xperia SP
+--------------
+
+http://forum.xda-developers.com/xperia-sp/development/kernel-helium-v1-t3251298
+
 Other devices
 -------------
 
