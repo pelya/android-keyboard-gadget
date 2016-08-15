@@ -138,6 +138,11 @@ Sony Xperia SP
 
 http://forum.xda-developers.com/xperia-sp/development/kernel-helium-v1-t3251298
 
+Xiaomi Redmi Note 3
+-------------------
+
+- http://forum.xda-developers.com/showthread.php?t=3439626
+
 Other devices
 -------------
 
