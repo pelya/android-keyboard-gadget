@@ -1,0 +1,412 @@
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c	2016-11-16 21:05:24.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c	2016-11-16 22:41:29.575559488 +0800
+@@ -51,6 +51,11 @@
+ #include "f_ecm.c"
+ #include "f_eem.c"
+ #include "u_ether.c"
++//HID patch
++#include "f_hid.h"
++#include "f_hid_android_keyboard.c"
++#include "f_hid_android_mouse.c"
++
+ 
+ //#define CONFIG_MTK_C2K_SUPPORT
+ #ifdef CONFIG_MTK_C2K_SUPPORT
+@@ -1806,12 +1811,52 @@
+ 	.attributes	= audio_source_function_attributes,
+ };
+ 
++//HID PATCH BEGIN
++static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
++{
++	return ghid_setup(cdev->gadget, 2);
++}
++
++static void hid_function_cleanup(struct android_usb_function *f)
++{
++	ghid_cleanup();
++}
++
++static int hid_function_bind_config(struct android_usb_function *f, struct usb_configuration *c)
++{
++	int ret;
++	printk(KERN_INFO "hid keyboard\n");
++	ret = hidg_bind_config(c, &ghid_device_android_keyboard, 0);
++	if (ret) {
++		pr_info("%s: hid_function_bind_config keyboard failed: %d\n", __func__, ret);
++		return ret;
++	}
++	printk(KERN_INFO "hid mouse\n");
++	ret = hidg_bind_config(c, &ghid_device_android_mouse, 1);
++	if (ret) {
++		pr_info("%s: hid_function_bind_config mouse failed: %d\n", __func__, ret);
++		return ret;
++	}
++	return 0;
++}
++
++static struct android_usb_function hid_function = {
++	.name= "hid",
++	.init= hid_function_init,
++	.cleanup= hid_function_cleanup,
++	.bind_config= hid_function_bind_config,
++};
++
++
++//HID PATCH END
++
+ static struct android_usb_function *supported_functions[] = {
+ 	&ffs_function,
+ 	&adb_function,
+ 	&acm_function,
+ 	&mtp_function,
+ 	&ptp_function,
++	&hid_function,
+ #ifndef CONFIG_USBIF_COMPLIANCE
+ 	&ecm_function,
+ 	&eem_function,
+@@ -2059,6 +2104,8 @@
+ 							   name, err);
+ 	}
+ 
++	android_enable_function(dev, "hid");
++
+ 	mutex_unlock(&dev->mutex);
+ 
+ 	return size;
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c	1970-01-01 08:00:00.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c	2016-11-16 22:41:29.575559488 +0800
+@@ -0,0 +1,45 @@
++#include <linux/platform_device.h>
++#include <linux/usb/g_hid.h>
++
++
++/* hid descriptor for a keyboard */
++static struct hidg_func_descriptor ghid_device_android_keyboard = {
++	.subclass= 1, /* Boot Interface Subclass */
++	.protocol= 1, /* Keyboard */
++	.report_length= 8,
++	.report_desc_length= 63,
++	.report_desc= {
++	0x05, 0x01,/* USAGE_PAGE (Generic Desktop)          */
++	0x09, 0x06,/* USAGE (Keyboard)                       */
++	0xa1, 0x01,/* COLLECTION (Application)               */
++	0x05, 0x07,/*   USAGE_PAGE (Keyboard)                */
++	0x19, 0xe0,/*   USAGE_MINIMUM (Keyboard LeftControl) */
++	0x29, 0xe7,/*   USAGE_MAXIMUM (Keyboard Right GUI)   */
++	0x15, 0x00,/*   LOGICAL_MINIMUM (0)                  */
++	0x25, 0x01,/*   LOGICAL_MAXIMUM (1)                  */
++	0x75, 0x01,/*   REPORT_SIZE (1)                      */
++	0x95, 0x08,/*   REPORT_COUNT (8)                     */
++	0x81, 0x02,/*   INPUT (Data,Var,Abs)                 */
++	0x95, 0x01,/*   REPORT_COUNT (1)                     */
++	0x75, 0x08,/*   REPORT_SIZE (8)                      */
++	0x81, 0x03,/*   INPUT (Cnst,Var,Abs)                 */
++	0x95, 0x05,/*   REPORT_COUNT (5)                     */
++	0x75, 0x01,/*   REPORT_SIZE (1)                      */
++	0x05, 0x08,/*   USAGE_PAGE (LEDs)                    */
++	0x19, 0x01,/*   USAGE_MINIMUM (Num Lock)             */
++	0x29, 0x05,/*   USAGE_MAXIMUM (Kana)                 */
++	0x91, 0x02,/*   OUTPUT (Data,Var,Abs)                */
++	0x95, 0x01,/*   REPORT_COUNT (1)                     */
++	0x75, 0x03,/*   REPORT_SIZE (3)                      */
++	0x91, 0x03,/*   OUTPUT (Cnst,Var,Abs)                */
++	0x95, 0x06,/*   REPORT_COUNT (6)                     */
++	0x75, 0x08,/*   REPORT_SIZE (8)                      */
++	0x15, 0x00,/*   LOGICAL_MINIMUM (0)                  */
++	0x25, 0x65,/*   LOGICAL_MAXIMUM (101)                */
++	0x05, 0x07,/*   USAGE_PAGE (Keyboard)                */
++	0x19, 0x00,/*   USAGE_MINIMUM (Reserved)             */
++	0x29, 0x65,/*   USAGE_MAXIMUM (Keyboard Application) */
++	0x81, 0x00,/*   INPUT (Data,Ary,Abs)                 */
++	0xc0/* END_COLLECTION                         */
++	}
++};
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c	1970-01-01 08:00:00.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c	2016-11-16 22:41:29.575559488 +0800
+@@ -0,0 +1,40 @@
++#include <linux/platform_device.h>
++#include <linux/usb/g_hid.h>
++
++/* HID descriptor for a mouse */
++static struct hidg_func_descriptor ghid_device_android_mouse = {
++	.subclass      = 1, /* Boot Interface Subclass */
++	.protocol      = 2, /* Mouse */
++	.report_length = 4,
++	.report_desc_length= 52,
++	.report_desc = {
++	0x05, 0x01,  //Usage Page(Generic Desktop Controls)
++	0x09, 0x02,  //Usage (Mouse)
++	0xa1, 0x01,  //Collection (Application)
++	0x09, 0x01,  //Usage (pointer)
++	0xa1, 0x00,  //Collection (Physical)
++	0x05, 0x09,  //Usage Page (Button)
++	0x19, 0x01,  //Usage Minimum(1)
++	0x29, 0x05,  //Usage Maximum(5)
++	0x15, 0x00,  //Logical Minimum(1)
++	0x25, 0x01,  //Logical Maximum(1)
++	0x95, 0x05,  //Report Count(5)
++	0x75, 0x01,  //Report Size(1)
++	0x81, 0x02,  //Input(Data,Variable,Absolute,BitField)
++	0x95, 0x01,  //Report Count(1)
++	0x75, 0x03,  //Report Size(3)
++	0x81, 0x01,  //Input(Constant,Array,Absolute,BitField)
++	0x05, 0x01,  //Usage Page(Generic Desktop Controls)
++	0x09, 0x30,  //Usage(x)
++	0x09, 0x31,  //Usage(y)
++	0x09, 0x38,  //Usage(Wheel)
++	0x15, 0x81,  //Logical Minimum(-127)
++	0x25, 0x7F,  //Logical Maximum(127)
++	0x75, 0x08,  //Report Size(8)
++	0x95, 0x03,  //Report Count(3)
++	0x81, 0x06,  //Input(Data,Variable,Relative,BitField)
++	0xc0,  //End Collection
++	0xc0  //End Collection
++	}
++};
++
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c	2016-11-16 21:05:24.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c	2016-11-16 22:41:29.575559488 +0800
+@@ -19,6 +19,10 @@
+ #include <linux/wait.h>
+ #include <linux/sched.h>
+ #include <linux/usb/g_hid.h>
++//HID patch
++#include <linux/delay.h>
++#include "f_hid.h"
++
+ 
+ static int major, minors;
+ static struct class *hidg_class;
+@@ -60,6 +64,50 @@
+ 	struct usb_ep			*out_ep;
+ };
+ 
++
++// HID patch begin
++
++/* Hacky device list to fix f_hidg_write being called after device destroyed.
++   It covers only most common race conditions, there will be rare crashes anyway. */
++enum { HACKY_DEVICE_LIST_SIZE = 4 };
++static struct f_hidg *hacky_device_list[HACKY_DEVICE_LIST_SIZE];
++static void hacky_device_list_add(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (!hacky_device_list[i]) {
++		hacky_device_list[i] = hidg;
++		return;
++		}
++	}
++	pr_err("%s: too many devices, not adding device %p\n", __func__, hidg);
++}
++static void hacky_device_list_remove(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (hacky_device_list[i] == hidg) {
++		hacky_device_list[i] = NULL;
++		return;
++		}
++	}
++	pr_err("%s: cannot find device %p\n", __func__, hidg);
++}
++static int hacky_device_list_check(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (hacky_device_list[i] == hidg) {
++		return 0;
++		}
++	}
++	return 1;
++}
++
++// HID patch end
++
++
++
+ static inline struct f_hidg *func_to_hidg(struct usb_function *f)
+ {
+ 	return container_of(f, struct f_hidg, func);
+@@ -175,7 +223,12 @@
+ 
+ 	if (!access_ok(VERIFY_WRITE, buffer, count))
+ 		return -EFAULT;
+-
++// HID patch begin
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to read from device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++// HID patch end
+ 	spin_lock_irqsave(&hidg->spinlock, flags);
+ 
+ #define READ_COND (!list_empty(&hidg->completed_out_req))
+@@ -300,7 +353,20 @@
+ 	struct f_hidg	*hidg  = file->private_data;
+ 	unsigned int	ret = 0;
+ 
++// HID patch if
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->read_queue, wait);
++
++// HID patch if
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->write_queue, wait);
+ 
+ 	if (WRITE_COND)
+@@ -399,7 +465,14 @@
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++// HID patch begin
++//		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -411,6 +484,16 @@
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++//HID patch begin
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)/* Report protocol */
++				goto respond;
++		}
++// HID patch end
+ 		goto stall;
+ 		break;
+ 
+@@ -560,12 +643,15 @@
+ 	.llseek		= noop_llseek,
+ };
+ 
+-static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
++// HID patch struct
++static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct usb_ep		*ep;
+ 	struct f_hidg		*hidg = func_to_hidg(f);
+ 	int			status;
+ 	dev_t			dev;
++// HID patch
++	pr_info("%s: creating device %p\n", __func__, hidg);
+ 
+ 	/* allocate instance-specific interface IDs, and patch descriptors */
+ 	status = usb_interface_id(c, f);
+@@ -632,7 +718,8 @@
+ 		goto fail;
+ 
+ 	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
+-
++// HID patch
++	hacky_device_list_add(hidg);
+ 	return 0;
+ 
+ fail:
+@@ -650,13 +737,21 @@
+ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct f_hidg *hidg = func_to_hidg(f);
++// HID patch begin
++	pr_info("%s: destroying device %p\n", __func__, hidg);
++	/* This does not cover all race conditions, only most common one */
++	mutex_lock(&hidg->lock);
++	hacky_device_list_remove(hidg);
++	mutex_unlock(&hidg->lock);
++//HID patch end
+ 
+ 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
+ 	cdev_del(&hidg->cdev);
+ 
+ 	/* disable/free request and end point */
+ 	usb_ep_disable(hidg->in_ep);
+-	usb_ep_dequeue(hidg->in_ep, hidg->req);
++// HID patch comment
++//	usb_ep_dequeue(hidg->in_ep, hidg->req);
+ 	kfree(hidg->req->buf);
+ 	usb_ep_free_request(hidg->in_ep, hidg->req);
+ 
+@@ -689,7 +784,7 @@
+ /*-------------------------------------------------------------------------*/
+ /*                             usb_configuration                           */
+ 
+-int __init hidg_bind_config(struct usb_configuration *c,
++int hidg_bind_config(struct usb_configuration *c,
+ 			    struct hidg_func_descriptor *fdesc, int index)
+ {
+ 	struct f_hidg *hidg;
+@@ -743,7 +838,7 @@
+ 	return status;
+ }
+ 
+-int __init ghid_setup(struct usb_gadget *g, int count)
++int ghid_setup(struct usb_gadget *g, int count)
+ {
+ 	int status;
+ 	dev_t dev;
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h	1970-01-01 08:00:00.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h	2016-11-16 22:41:29.575559488 +0800
+@@ -0,0 +1,16 @@
++
++#ifndef _GADGET_F_HID_H
++#define _GADGET_F_HID_H
++
++#include <linux/hid.h>
++#include <linux/usb/composite.h>
++#include <linux/usb/gadget.h>
++#include <linux/usb/g_hid.h>
++
++int hidg_bind_config(struct usb_configuration *c,struct hidg_func_descriptor *fdesc, int index);
++
++int ghid_setup(struct usb_gadget *g, int count);
++
++void ghid_cleanup(void);
++
++#endif
+diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile
+--- android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile	2016-11-16 21:05:24.000000000 +0800
++++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile	2016-11-16 22:41:29.579559505 +0800
+@@ -1,6 +1,8 @@
+ #
+ # USB peripheral controller drivers
+ #
++KBUILD_CFLAGS += -w
++KBUILD_CFLAGS += -Wno-error=unused-but-set-variable
+ ccflags-$(CONFIG_USB_GADGET_DEBUG) := -DDEBUG
+ include $(srctree)/drivers/misc/mediatek/Makefile.custom
+ 
+@@ -68,7 +70,7 @@
+ g_webcam-y			:= webcam.o
+ g_ncm-y				:= ncm.o
+ g_acm_ms-y			:= acm_ms.o
+-g_android-y			:= android.o
++g_android-y			:= android.o f_hid.o
+ g_tcm_usb_gadget-y		:= tcm_usb_gadget.o
+ 
+ obj-$(CONFIG_USB_ZERO)		+= g_zero.o
