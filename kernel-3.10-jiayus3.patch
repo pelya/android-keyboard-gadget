@@ -1,6 +1,6 @@
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c	2016-11-16 21:05:24.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c	2016-11-16 22:41:29.575559488 +0800
+diff -uN a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
+--- a/drivers/usb/gadget/android.c	2016-11-16 21:05:24.000000000 +0800
++++ b/drivers/usb/gadget/android.c	2016-11-16 22:41:29.575559488 +0800
 @@ -51,6 +51,11 @@
  #include "f_ecm.c"
  #include "f_eem.c"
@@ -75,9 +75,9 @@ diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/android.c android_kerne
  	mutex_unlock(&dev->mutex);
  
  	return size;
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c	1970-01-01 08:00:00.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.c	2016-11-16 22:41:29.575559488 +0800
+diff -uN a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
+--- a/drivers/usb/gadget/f_hid_android_keyboard.c	1970-01-01 08:00:00.000000000 +0800
++++ b/drivers/usb/gadget/f_hid_android_keyboard.c	2016-11-16 22:41:29.575559488 +0800
 @@ -0,0 +1,45 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
@@ -124,9 +124,9 @@ diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_keyboard.
 +	0xc0/* END_COLLECTION                         */
 +	}
 +};
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c	1970-01-01 08:00:00.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c	2016-11-16 22:41:29.575559488 +0800
+diff -uN a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
+--- a/drivers/usb/gadget/f_hid_android_mouse.c	1970-01-01 08:00:00.000000000 +0800
++++ b/drivers/usb/gadget/f_hid_android_mouse.c	2016-11-16 22:41:29.575559488 +0800
 @@ -0,0 +1,40 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
@@ -168,9 +168,9 @@ diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid_android_mouse.c a
 +	}
 +};
 +
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c	2016-11-16 21:05:24.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c	2016-11-16 22:41:29.575559488 +0800
+diff -uN a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
+--- a/drivers/usb/gadget/f_hid.c	2016-11-16 21:05:24.000000000 +0800
++++ b/drivers/usb/gadget/f_hid.c	2016-11-16 22:41:29.575559488 +0800
 @@ -19,6 +19,10 @@
  #include <linux/wait.h>
  #include <linux/sched.h>
@@ -369,9 +369,9 @@ diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.c android_kernel_
  {
  	int status;
  	dev_t dev;
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h	1970-01-01 08:00:00.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h	2016-11-16 22:41:29.575559488 +0800
+diff -uN a/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
+--- a/drivers/usb/gadget/f_hid.h	1970-01-01 08:00:00.000000000 +0800
++++ b/drivers/usb/gadget/f_hid.h	2016-11-16 22:41:29.575559488 +0800
 @@ -0,0 +1,16 @@
 +
 +#ifndef _GADGET_F_HID_H
@@ -389,9 +389,9 @@ diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/f_hid.h android_kernel_
 +void ghid_cleanup(void);
 +
 +#endif
-diff -uN android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile
---- android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile	2016-11-16 21:05:24.000000000 +0800
-+++ android_kernel_jiayu_s3_h560/drivers/usb/gadget/Makefile	2016-11-16 22:41:29.579559505 +0800
+diff -uN a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
+--- a/drivers/usb/gadget/Makefile	2016-11-16 21:05:24.000000000 +0800
++++ b/drivers/usb/gadget/Makefile	2016-11-16 22:41:29.579559505 +0800
 @@ -1,6 +1,8 @@
  #
  # USB peripheral controller drivers
