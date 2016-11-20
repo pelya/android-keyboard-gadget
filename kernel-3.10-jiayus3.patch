@@ -1,23 +1,45 @@
-diff -uN a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
---- a/drivers/usb/gadget/android.c	2016-11-16 21:05:24.000000000 +0800
-+++ b/drivers/usb/gadget/android.c	2016-11-16 22:41:29.575559488 +0800
-@@ -51,6 +51,11 @@
- #include "f_ecm.c"
+diff --git a/usb/gadget/Makefile b/usb/gadget/Makefile
+index f21aa18..8f52d3c 100644
+--- a/usb/gadget/Makefile
++++ b/usb/gadget/Makefile
+@@ -1,6 +1,8 @@
+ #
+ # USB peripheral controller drivers
+ #
++KBUILD_CFLAGS += -w
++KBUILD_CFLAGS += -Wno-error=unused-but-set-variable
+ ccflags-$(CONFIG_USB_GADGET_DEBUG) := -DDEBUG
+ include $(srctree)/drivers/misc/mediatek/Makefile.custom
+ 
+@@ -68,7 +70,7 @@ g_nokia-y			:= nokia.o
+ g_webcam-y			:= webcam.o
+ g_ncm-y				:= ncm.o
+ g_acm_ms-y			:= acm_ms.o
+-g_android-y			:= android.o
++g_android-y			:= android.o f_hid.o
+ g_tcm_usb_gadget-y		:= tcm_usb_gadget.o
+ 
+ obj-$(CONFIG_USB_ZERO)		+= g_zero.o
+diff --git a/usb/gadget/android.c b/usb/gadget/android.c
+index 5aab9f1..5c4fc36 100644
+--- a/usb/gadget/android.c
++++ b/usb/gadget/android.c
+@@ -52,6 +52,11 @@
  #include "f_eem.c"
  #include "u_ether.c"
-+//HID patch
+ 
 +#include "f_hid.h"
 +#include "f_hid_android_keyboard.c"
 +#include "f_hid_android_mouse.c"
 +
- 
++
  //#define CONFIG_MTK_C2K_SUPPORT
  #ifdef CONFIG_MTK_C2K_SUPPORT
-@@ -1806,12 +1811,52 @@
+ #include <mach/viatel_rawbulk.h>
+@@ -1806,12 +1811,49 @@ static struct android_usb_function audio_source_function = {
  	.attributes	= audio_source_function_attributes,
  };
  
-+//HID PATCH BEGIN
 +static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
 +{
 +	return ghid_setup(cdev->gadget, 2);
@@ -54,8 +76,6 @@ diff -uN a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
 +};
 +
 +
-+//HID PATCH END
-+
  static struct android_usb_function *supported_functions[] = {
  	&ffs_function,
  	&adb_function,
@@ -66,7 +86,7 @@ diff -uN a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
  #ifndef CONFIG_USBIF_COMPLIANCE
  	&ecm_function,
  	&eem_function,
-@@ -2059,6 +2104,8 @@
+@@ -2059,6 +2101,8 @@ functions_store(struct device *pdev, struct device_attribute *attr,
  							   name, err);
  	}
  
@@ -75,9 +95,219 @@ diff -uN a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
  	mutex_unlock(&dev->mutex);
  
  	return size;
-diff -uN a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
---- a/drivers/usb/gadget/f_hid_android_keyboard.c	1970-01-01 08:00:00.000000000 +0800
-+++ b/drivers/usb/gadget/f_hid_android_keyboard.c	2016-11-16 22:41:29.575559488 +0800
+diff --git a/usb/gadget/f_hid.c b/usb/gadget/f_hid.c
+index 6e69a8e..ef370a6 100644
+--- a/usb/gadget/f_hid.c
++++ b/usb/gadget/f_hid.c
+@@ -20,6 +20,10 @@
+ #include <linux/sched.h>
+ #include <linux/usb/g_hid.h>
+ 
++#include <linux/delay.h>
++#include "f_hid.h"
++
++
+ static int major, minors;
+ static struct class *hidg_class;
+ 
+@@ -60,6 +64,46 @@ struct f_hidg {
+ 	struct usb_ep			*out_ep;
+ };
+ 
++
++/* Hacky device list to fix f_hidg_write being called after device destroyed.
++   It covers only most common race conditions, there will be rare crashes anyway. */
++enum { HACKY_DEVICE_LIST_SIZE = 4 };
++static struct f_hidg *hacky_device_list[HACKY_DEVICE_LIST_SIZE];
++static void hacky_device_list_add(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (!hacky_device_list[i]) {
++		hacky_device_list[i] = hidg;
++		return;
++		}
++	}
++	pr_err("%s: too many devices, not adding device %p\n", __func__, hidg);
++}
++static void hacky_device_list_remove(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (hacky_device_list[i] == hidg) {
++		hacky_device_list[i] = NULL;
++		return;
++		}
++	}
++	pr_err("%s: cannot find device %p\n", __func__, hidg);
++}
++static int hacky_device_list_check(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++	if (hacky_device_list[i] == hidg) {
++		return 0;
++		}
++	}
++	return 1;
++}
++
++
++
+ static inline struct f_hidg *func_to_hidg(struct usb_function *f)
+ {
+ 	return container_of(f, struct f_hidg, func);
+@@ -176,6 +220,11 @@ static ssize_t f_hidg_read(struct file *file, char __user *buffer,
+ 	if (!access_ok(VERIFY_WRITE, buffer, count))
+ 		return -EFAULT;
+ 
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to read from device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	spin_lock_irqsave(&hidg->spinlock, flags);
+ 
+ #define READ_COND (!list_empty(&hidg->completed_out_req))
+@@ -300,7 +349,18 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
+ 	struct f_hidg	*hidg  = file->private_data;
+ 	unsigned int	ret = 0;
+ 
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->read_queue, wait);
++
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->write_queue, wait);
+ 
+ 	if (WRITE_COND)
+@@ -399,7 +459,13 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++//		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -411,6 +477,14 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)/* Report protocol */
++				goto respond;
++		}
+ 		goto stall;
+ 		break;
+ 
+@@ -560,12 +634,13 @@ const struct file_operations f_hidg_fops = {
+ 	.llseek		= noop_llseek,
+ };
+ 
+-static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
++static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct usb_ep		*ep;
+ 	struct f_hidg		*hidg = func_to_hidg(f);
+ 	int			status;
+ 	dev_t			dev;
++	pr_info("%s: creating device %p\n", __func__, hidg);
+ 
+ 	/* allocate instance-specific interface IDs, and patch descriptors */
+ 	status = usb_interface_id(c, f);
+@@ -632,7 +707,7 @@ static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
+ 		goto fail;
+ 
+ 	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
+-
++	hacky_device_list_add(hidg);
+ 	return 0;
+ 
+ fail:
+@@ -650,13 +725,19 @@ fail:
+ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct f_hidg *hidg = func_to_hidg(f);
++	pr_info("%s: destroying device %p\n", __func__, hidg);
++	/* This does not cover all race conditions, only most common one */
++	mutex_lock(&hidg->lock);
++	hacky_device_list_remove(hidg);
++	mutex_unlock(&hidg->lock);
+ 
+ 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
+ 	cdev_del(&hidg->cdev);
+ 
+ 	/* disable/free request and end point */
+ 	usb_ep_disable(hidg->in_ep);
+-	usb_ep_dequeue(hidg->in_ep, hidg->req);
++
++//	usb_ep_dequeue(hidg->in_ep, hidg->req);
+ 	kfree(hidg->req->buf);
+ 	usb_ep_free_request(hidg->in_ep, hidg->req);
+ 
+@@ -689,7 +770,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
+ /*-------------------------------------------------------------------------*/
+ /*                             usb_configuration                           */
+ 
+-int __init hidg_bind_config(struct usb_configuration *c,
++int hidg_bind_config(struct usb_configuration *c,
+ 			    struct hidg_func_descriptor *fdesc, int index)
+ {
+ 	struct f_hidg *hidg;
+@@ -743,7 +824,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
+ 	return status;
+ }
+ 
+-int __init ghid_setup(struct usb_gadget *g, int count)
++int ghid_setup(struct usb_gadget *g, int count)
+ {
+ 	int status;
+ 	dev_t dev;
+diff --git a/usb/gadget/f_hid.h b/usb/gadget/f_hid.h
+new file mode 100644
+index 0000000..a99937a
+--- /dev/null
++++ b/usb/gadget/f_hid.h
+@@ -0,0 +1,16 @@
++
++#ifndef _GADGET_F_HID_H
++#define _GADGET_F_HID_H
++
++#include <linux/hid.h>
++#include <linux/usb/composite.h>
++#include <linux/usb/gadget.h>
++#include <linux/usb/g_hid.h>
++
++int hidg_bind_config(struct usb_configuration *c,struct hidg_func_descriptor *fdesc, int index);
++
++int ghid_setup(struct usb_gadget *g, int count);
++
++void ghid_cleanup(void);
++
++#endif
+diff --git a/usb/gadget/f_hid_android_keyboard.c b/usb/gadget/f_hid_android_keyboard.c
+new file mode 100644
+index 0000000..7ec9faa
+--- /dev/null
++++ b/usb/gadget/f_hid_android_keyboard.c
 @@ -0,0 +1,45 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
@@ -124,9 +354,11 @@ diff -uN a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hi
 +	0xc0/* END_COLLECTION                         */
 +	}
 +};
-diff -uN a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
---- a/drivers/usb/gadget/f_hid_android_mouse.c	1970-01-01 08:00:00.000000000 +0800
-+++ b/drivers/usb/gadget/f_hid_android_mouse.c	2016-11-16 22:41:29.575559488 +0800
+diff --git a/usb/gadget/f_hid_android_mouse.c b/usb/gadget/f_hid_android_mouse.c
+new file mode 100644
+index 0000000..7487c03
+--- /dev/null
++++ b/usb/gadget/f_hid_android_mouse.c
 @@ -0,0 +1,40 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
@@ -168,245 +400,3 @@ diff -uN a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_a
 +	}
 +};
 +
-diff -uN a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
---- a/drivers/usb/gadget/f_hid.c	2016-11-16 21:05:24.000000000 +0800
-+++ b/drivers/usb/gadget/f_hid.c	2016-11-16 22:41:29.575559488 +0800
-@@ -19,6 +19,10 @@
- #include <linux/wait.h>
- #include <linux/sched.h>
- #include <linux/usb/g_hid.h>
-+//HID patch
-+#include <linux/delay.h>
-+#include "f_hid.h"
-+
- 
- static int major, minors;
- static struct class *hidg_class;
-@@ -60,6 +64,50 @@
- 	struct usb_ep			*out_ep;
- };
- 
-+
-+// HID patch begin
-+
-+/* Hacky device list to fix f_hidg_write being called after device destroyed.
-+   It covers only most common race conditions, there will be rare crashes anyway. */
-+enum { HACKY_DEVICE_LIST_SIZE = 4 };
-+static struct f_hidg *hacky_device_list[HACKY_DEVICE_LIST_SIZE];
-+static void hacky_device_list_add(struct f_hidg *hidg)
-+{
-+	int i;
-+	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
-+	if (!hacky_device_list[i]) {
-+		hacky_device_list[i] = hidg;
-+		return;
-+		}
-+	}
-+	pr_err("%s: too many devices, not adding device %p\n", __func__, hidg);
-+}
-+static void hacky_device_list_remove(struct f_hidg *hidg)
-+{
-+	int i;
-+	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
-+	if (hacky_device_list[i] == hidg) {
-+		hacky_device_list[i] = NULL;
-+		return;
-+		}
-+	}
-+	pr_err("%s: cannot find device %p\n", __func__, hidg);
-+}
-+static int hacky_device_list_check(struct f_hidg *hidg)
-+{
-+	int i;
-+	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
-+	if (hacky_device_list[i] == hidg) {
-+		return 0;
-+		}
-+	}
-+	return 1;
-+}
-+
-+// HID patch end
-+
-+
-+
- static inline struct f_hidg *func_to_hidg(struct usb_function *f)
- {
- 	return container_of(f, struct f_hidg, func);
-@@ -175,7 +223,12 @@
- 
- 	if (!access_ok(VERIFY_WRITE, buffer, count))
- 		return -EFAULT;
--
-+// HID patch begin
-+	if (hacky_device_list_check(hidg)) {
-+		pr_err("%s: trying to read from device %p that was destroyed\n", __func__, hidg);
-+		return -EIO;
-+	}
-+// HID patch end
- 	spin_lock_irqsave(&hidg->spinlock, flags);
- 
- #define READ_COND (!list_empty(&hidg->completed_out_req))
-@@ -300,7 +353,20 @@
- 	struct f_hidg	*hidg  = file->private_data;
- 	unsigned int	ret = 0;
- 
-+// HID patch if
-+	if (hacky_device_list_check(hidg)) {
-+		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
-+		return -EIO;
-+	}
-+
- 	poll_wait(file, &hidg->read_queue, wait);
-+
-+// HID patch if
-+	if (hacky_device_list_check(hidg)) {
-+		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
-+		return -EIO;
-+	}
-+
- 	poll_wait(file, &hidg->write_queue, wait);
- 
- 	if (WRITE_COND)
-@@ -399,7 +465,14 @@
- 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
- 		  | HID_REQ_GET_PROTOCOL):
- 		VDBG(cdev, "get_protocol\n");
--		goto stall;
-+// HID patch begin
-+//		goto stall;
-+		length = min_t(unsigned, length, 1);
-+		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
-+			((u8 *) req->buf)[0] = 0;/* Boot protocol */
-+		else
-+			((u8 *) req->buf)[0] = 1;/* Report protocol */
-+		goto respond;
- 		break;
- 
- 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
-@@ -411,6 +484,16 @@
- 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
- 		  | HID_REQ_SET_PROTOCOL):
- 		VDBG(cdev, "set_protocol\n");
-+//HID patch begin
-+		length = 0;
-+		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
-+			if (value == 0)/* Boot protocol */
-+				goto respond;
-+		} else {
-+			if (value == 1)/* Report protocol */
-+				goto respond;
-+		}
-+// HID patch end
- 		goto stall;
- 		break;
- 
-@@ -560,12 +643,15 @@
- 	.llseek		= noop_llseek,
- };
- 
--static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
-+// HID patch struct
-+static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
- {
- 	struct usb_ep		*ep;
- 	struct f_hidg		*hidg = func_to_hidg(f);
- 	int			status;
- 	dev_t			dev;
-+// HID patch
-+	pr_info("%s: creating device %p\n", __func__, hidg);
- 
- 	/* allocate instance-specific interface IDs, and patch descriptors */
- 	status = usb_interface_id(c, f);
-@@ -632,7 +718,8 @@
- 		goto fail;
- 
- 	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
--
-+// HID patch
-+	hacky_device_list_add(hidg);
- 	return 0;
- 
- fail:
-@@ -650,13 +737,21 @@
- static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
- {
- 	struct f_hidg *hidg = func_to_hidg(f);
-+// HID patch begin
-+	pr_info("%s: destroying device %p\n", __func__, hidg);
-+	/* This does not cover all race conditions, only most common one */
-+	mutex_lock(&hidg->lock);
-+	hacky_device_list_remove(hidg);
-+	mutex_unlock(&hidg->lock);
-+//HID patch end
- 
- 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
- 	cdev_del(&hidg->cdev);
- 
- 	/* disable/free request and end point */
- 	usb_ep_disable(hidg->in_ep);
--	usb_ep_dequeue(hidg->in_ep, hidg->req);
-+// HID patch comment
-+//	usb_ep_dequeue(hidg->in_ep, hidg->req);
- 	kfree(hidg->req->buf);
- 	usb_ep_free_request(hidg->in_ep, hidg->req);
- 
-@@ -689,7 +784,7 @@
- /*-------------------------------------------------------------------------*/
- /*                             usb_configuration                           */
- 
--int __init hidg_bind_config(struct usb_configuration *c,
-+int hidg_bind_config(struct usb_configuration *c,
- 			    struct hidg_func_descriptor *fdesc, int index)
- {
- 	struct f_hidg *hidg;
-@@ -743,7 +838,7 @@
- 	return status;
- }
- 
--int __init ghid_setup(struct usb_gadget *g, int count)
-+int ghid_setup(struct usb_gadget *g, int count)
- {
- 	int status;
- 	dev_t dev;
-diff -uN a/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
---- a/drivers/usb/gadget/f_hid.h	1970-01-01 08:00:00.000000000 +0800
-+++ b/drivers/usb/gadget/f_hid.h	2016-11-16 22:41:29.575559488 +0800
-@@ -0,0 +1,16 @@
-+
-+#ifndef _GADGET_F_HID_H
-+#define _GADGET_F_HID_H
-+
-+#include <linux/hid.h>
-+#include <linux/usb/composite.h>
-+#include <linux/usb/gadget.h>
-+#include <linux/usb/g_hid.h>
-+
-+int hidg_bind_config(struct usb_configuration *c,struct hidg_func_descriptor *fdesc, int index);
-+
-+int ghid_setup(struct usb_gadget *g, int count);
-+
-+void ghid_cleanup(void);
-+
-+#endif
-diff -uN a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
---- a/drivers/usb/gadget/Makefile	2016-11-16 21:05:24.000000000 +0800
-+++ b/drivers/usb/gadget/Makefile	2016-11-16 22:41:29.579559505 +0800
-@@ -1,6 +1,8 @@
- #
- # USB peripheral controller drivers
- #
-+KBUILD_CFLAGS += -w
-+KBUILD_CFLAGS += -Wno-error=unused-but-set-variable
- ccflags-$(CONFIG_USB_GADGET_DEBUG) := -DDEBUG
- include $(srctree)/drivers/misc/mediatek/Makefile.custom
- 
-@@ -68,7 +70,7 @@
- g_webcam-y			:= webcam.o
- g_ncm-y				:= ncm.o
- g_acm_ms-y			:= acm_ms.o
--g_android-y			:= android.o
-+g_android-y			:= android.o f_hid.o
- g_tcm_usb_gadget-y		:= tcm_usb_gadget.o
- 
- obj-$(CONFIG_USB_ZERO)		+= g_zero.o
