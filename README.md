@@ -132,6 +132,11 @@ Sony Xperia Z5 Premium E6853
 
 - https://github.com/pelya/android-keyboard-gadget/blob/master/sony-xperia-z5p/boot.img?raw=true
 
+Sony Xperia Z5 Compact
+----------------------
+
+- https://github.com/pelya/android-keyboard-gadget/blob/master/sony-z5c/boot.img?raw=true
+
 Xiaomi Redmi 2
 --------------
 
