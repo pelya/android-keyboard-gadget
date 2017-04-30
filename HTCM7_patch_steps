@@ -2,7 +2,7 @@ This patch is for the HTC ONE M7 running kernels 3.4.111 or 3.4.113
 
 I used the source kernels cm-13.0 and cm14.1 from the below github, however, the following steps may or may not work on other kernels for the HTC M7
 
-<https://github.com/9Lukas5/android_kernel_htc_msm8960>
+https://github.com/9Lukas5/android_kernel_htc_msm8960
 
 Some of the below steps do require you to go into the files and manually add/edit lines, if you don't feel you can do this, then please don't attempt it. 
 
