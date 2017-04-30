@@ -1,9 +1,9 @@
 This patch is for the HTC ONE M7 running kernels 3.4.111 or 3.4.113
 
 I used the source kernels cm-13.0 and cm14.1 from the below github, however, the following steps may or may not work on other kernels for the HTC M7
-
+'''
 https://github.com/9Lukas5/android_kernel_htc_msm8960
-
+'''
 Some of the below steps do require you to go into the files and manually add/edit lines, if you don't feel you can do this, then please don't attempt it. 
 
 Step 1,
@@ -13,11 +13,11 @@ Download the patch kernel-3.10-nexus6.patch and place it within the root of your
 Step 2,
 
 Run the following cmd 
-
+'''
 patch -p1 < kernel-3.10-nexus6.patch
-
+'''
 You should be greeted with the below print out. 
-
+'''
 patching file drivers/usb/gadget/Makefile
 Hunk #1 FAILED at 67.
 1 out of 1 hunk FAILED -- saving rejects to file drivers/usb/gadget/Makefile.rej
@@ -45,65 +45,67 @@ Hunk #13 succeeded at 719 (offset -112 lines).
 patching file drivers/usb/gadget/f_hid.h
 patching file drivers/usb/gadget/f_hid_android_keyboard.c
 patching file drivers/usb/gadget/f_hid_android_mouse.c
-
+'''
 Step 3,
 
 Now navigate to the directory 
-
+'''
 drivers/usb/gadget/Makefile
-
+'''
 find the line 
-
+'''
 g_android-y	:= android.o
-
+'''
 Replace it with the below line and save
-
+'''
 g_android-y	:= android.o f_hid.o
-
+'''
 Step 4
 
 Navigate to the file 
-
+'''
 drivers/usb/gadget/android.c
-
+'''
 Find the line 
-
+'''
 #include "f_accessory.c"
-
+'''
 Make a new line and add the following three lines 
-
+'''
 #include "f_hid.h"
 #include "f_hid_android_keyboard.c"
 #include "f_hid_android_mouse.c"
-
+'''
 In the same file, find the line
-
+'''
 &audio_source_function,
-
+'''
 Create a new line, add the following and save the file. 
-
+'''
 &hid_function,
-
+'''
 Step 5,
 
 Navigate to the file
-
+'''
 drivers/usb/gadget/f_hid.c
-
+'''
 find the line
-
+'''
 #include <linux/wait.h>
-
+'''
 create a new line, add the following line. 
-
+'''
 #include <linux/delay.h>
-
-In the same file, directly below #include <linux/usb/g_hid.h>
-
+'''
+In the same file, directly below 
+'''
+#include <linux/usb/g_hid.h>
+'''
 add the following file, then save. 
-
+'''
 #include "f_hid.h"
-
+'''
 --------------------------------------------------------------------
 
 That's it, you're now done and can carry on building your kernel. 
