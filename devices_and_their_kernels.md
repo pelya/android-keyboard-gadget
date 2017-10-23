@@ -1,3 +1,10 @@
+If you want to help me improve this table:
+You can find all the missing information by
+- going to the [LineageOS CVE tracker](https://cve.lineageos.org/devices)
+- following the links from the LineageOS CVE tracker to github and reading the README's
+- going to the [LineageOS Wiki](https://wiki.lineageos.org/) - add the device codename at the end of the URL!
+- going to the [LineageOS Download Website](https://download.lineageos.org/) - add the device codename at the end of the URL!
+
 Device Name			|device codename	|System on Chip	|LineageOS Kernel source:
 --------------------------------|-----------------------|---------------|--------------------------------------------------------------
 Motorola Moto G (1st Gen)	|falcon			|MSM8226	|https://github.com/LineageOS/android_kernel_motorola_msm8226
