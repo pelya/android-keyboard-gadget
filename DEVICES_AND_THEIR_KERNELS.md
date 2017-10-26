@@ -267,6 +267,7 @@ Oneplus 2                                     |oneplus2         |??             
 Oneplus 3                                     |oneplus3         |??                       |MSM8996   |android_kernel_oneplus_msm8996                |            |https://github.com/OnePlusOSS/android_kernel_oneplus_msm8996                          |                     |          
 Oneplus 5                                     |cheeseburger     |??                       |MSM8998   |android_kernel_oneplus_msm8998                |            |https://github.com/OnePlusOSS/android_kernel_oneplus_msm8998                          |                     |          
 Jiayu S3                                      |jys3             |h560                     |MT6752    |--                                            |            |https://github.com/MediatekAndroidDevelopers/android_kernel_jiayu_s3_h560             |                     |          
-
+LG G2 (International)                         |d802             |d802                     |MSM8974   |android_kernel_lge_msm8974                    |            |http://opensource.lge.com/osSch/list?types=ALL&search=d802                            |                     |          
+HTC One X (International)                     |endeavoru        |S720e/G23                |TEGRA T30 |android_kernel_htc_endeavoru                  |            |https://www.htcdev.com/devcenter/downloads                                            |                     |          
 
 
