@@ -152,6 +152,11 @@ Xiaomi Redmi Note 3
 
 - http://forum.xda-developers.com/showthread.php?t=3439626
 
+Samsung Galaxy Tab 2 (any espresso3g based device)
+--------------------------------------------------
+
+- https://github.com/tijesef/android-keyboard-gadget/raw/master/compiled/Samsung_Galaxy_Tab_2-espresso3g_LINEAGE-13.0/boot.img
+
 Other devices
 -------------
 
