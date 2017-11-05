@@ -1,0 +1,411 @@
+diff --git a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
+index b8f51490..f9a58b3 100644
+--- a/drivers/usb/gadget/Makefile
++++ b/drivers/usb/gadget/Makefile
+@@ -55,7 +55,7 @@ g_webcam-y			:= webcam.o
+ g_ncm-y				:= ncm.o
+ g_acm_ms-y			:= acm_ms.o
+ g_tcm_usb_gadget-y		:= tcm_usb_gadget.o
+-g_android-y			:= android.o
++g_android-y			:= android.o f_hid.o
+ 
+ obj-$(CONFIG_USB_ZERO)		+= g_zero.o
+ obj-$(CONFIG_USB_AUDIO)		+= g_audio.o
+diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
+index 4ad4e70..a99cde5 100644
+--- a/drivers/usb/gadget/android.c
++++ b/drivers/usb/gadget/android.c
+@@ -68,6 +68,9 @@
+ #include "f_ccid.c"
+ #include "f_mtp.c"
+ #include "f_accessory.c"
++#include "f_hid.h"
++#include "f_hid_android_keyboard.c"
++#include "f_hid_android_mouse.c"
+ #ifdef CONFIG_USB_ANDROID_CDC_ECM
+ #include "f_ecm.c"
+ #else
+@@ -1870,6 +1873,41 @@ static struct android_usb_function midi_function = {
+ 	.attributes	= midi_function_attributes,
+ };
+ 
++static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
++{
++	return ghid_setup(cdev->gadget, 2);
++}
++
++static void hid_function_cleanup(struct android_usb_function *f)
++{
++	ghid_cleanup();
++}
++
++static int hid_function_bind_config(struct android_usb_function *f, struct usb_configuration *c)
++{
++	int ret;
++	printk(KERN_INFO "hid keyboard\n");
++	ret = hidg_bind_config(c, &ghid_device_android_keyboard, 0);
++	if (ret) {
++		pr_info("%s: hid_function_bind_config keyboard failed: %d\n", __func__, ret);
++		return ret;
++	}
++	printk(KERN_INFO "hid mouse\n");
++	ret = hidg_bind_config(c, &ghid_device_android_mouse, 1);
++	if (ret) {
++		pr_info("%s: hid_function_bind_config mouse failed: %d\n", __func__, ret);
++		return ret;
++	}
++	return 0;
++}
++
++static struct android_usb_function hid_function = {
++	.name		= "hid",
++	.init		= hid_function_init,
++	.cleanup	= hid_function_cleanup,
++	.bind_config	= hid_function_bind_config,
++};
++
+ static struct android_usb_function *supported_functions[] = {
+ 	&mbim_function,
+ 	&ecm_qc_function,
+@@ -1896,6 +1934,7 @@ static struct android_usb_function *supported_functions[] = {
+ 	&audio_source_function,
+ 	&midi_function,
+ 	&uasp_function,
++	&hid_function,
+ 	NULL
+ };
+ 
+@@ -2169,6 +2208,8 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 						name);
+ 			}
+ 		}
++		/* HID driver always enabled, it's the whole point of this kernel patch */
++		// android_enable_function(dev, conf, "hid");
+ 	}
+ 
+ 	/* Free uneeded configurations if exists */
+diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
+index b211342..d600c74 100644
+--- a/drivers/usb/gadget/f_hid.c
++++ b/drivers/usb/gadget/f_hid.c
+@@ -18,7 +18,9 @@
+ #include <linux/poll.h>
+ #include <linux/uaccess.h>
+ #include <linux/wait.h>
++#include <linux/delay.h>
+ #include <linux/usb/g_hid.h>
++#include "f_hid.h"
+ 
+ static int major, minors;
+ static struct class *hidg_class;
+@@ -52,6 +54,43 @@ struct f_hidg {
+ 	struct usb_ep			*in_ep;
+ };
+ 
++/* Hacky device list to fix f_hidg_write being called after device destroyed.
++   It covers only most common race conditions, there will be rare crashes anyway. */
++enum { HACKY_DEVICE_LIST_SIZE = 4 };
++static struct f_hidg *hacky_device_list[HACKY_DEVICE_LIST_SIZE];
++static void hacky_device_list_add(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++		if (!hacky_device_list[i]) {
++			hacky_device_list[i] = hidg;
++			return;
++		}
++	}
++	pr_err("%s: too many devices, not adding device %p\n", __func__, hidg);
++}
++static void hacky_device_list_remove(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++		if (hacky_device_list[i] == hidg) {
++			hacky_device_list[i] = NULL;
++			return;
++		}
++	}
++	pr_err("%s: cannot find device %p\n", __func__, hidg);
++}
++static int hacky_device_list_check(struct f_hidg *hidg)
++{
++	int i;
++	for (i = 0; i < HACKY_DEVICE_LIST_SIZE; i++) {
++		if (hacky_device_list[i] == hidg) {
++			return 0;
++		}
++	}
++	return 1;
++}
++
+ static inline struct f_hidg *func_to_hidg(struct usb_function *f)
+ {
+ 	return container_of(f, struct f_hidg, func);
+@@ -140,6 +179,11 @@ static ssize_t f_hidg_read(struct file *file, char __user *buffer,
+ 	if (!access_ok(VERIFY_WRITE, buffer, count))
+ 		return -EFAULT;
+ 
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to read from device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	spin_lock_irqsave(&hidg->spinlock, flags);
+ 
+ #define READ_COND (hidg->set_report_buff != NULL)
+@@ -194,6 +238,11 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 	if (!access_ok(VERIFY_READ, buffer, count))
+ 		return -EFAULT;
+ 
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to write to device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	mutex_lock(&hidg->lock);
+ 
+ #define WRITE_COND (!hidg->write_pending)
+@@ -208,6 +257,11 @@ static ssize_t f_hidg_write(struct file *file, const char __user *buffer,
+ 				hidg->write_queue, WRITE_COND))
+ 			return -ERESTARTSYS;
+ 
++		if (hacky_device_list_check(hidg)) {
++			pr_err("%s: trying to write to device %p that was destroyed\n", __func__, hidg);
++			return -EIO;
++		}
++
+ 		mutex_lock(&hidg->lock);
+ 	}
+ 
+@@ -248,7 +302,18 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
+ 	struct f_hidg	*hidg  = file->private_data;
+ 	unsigned int	ret = 0;
+ 
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->read_queue, wait);
++
++	if (hacky_device_list_check(hidg)) {
++		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
++		return -EIO;
++	}
++
+ 	poll_wait(file, &hidg->write_queue, wait);
+ 
+ 	if (WRITE_COND)
+@@ -338,7 +403,12 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_GET_PROTOCOL):
+ 		VDBG(cdev, "get_protocol\n");
+-		goto stall;
++		length = min_t(unsigned, length, 1);
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
++			((u8 *) req->buf)[0] = 0;	/* Boot protocol */
++		else
++			((u8 *) req->buf)[0] = 1;	/* Report protocol */
++		goto respond;
+ 		break;
+ 
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+@@ -352,6 +422,14 @@ static int hidg_setup(struct usb_function *f,
+ 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
+ 		  | HID_REQ_SET_PROTOCOL):
+ 		VDBG(cdev, "set_protocol\n");
++		length = 0;
++		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
++			if (value == 0)		/* Boot protocol */
++				goto respond;
++		} else {
++			if (value == 1)		/* Report protocol */
++				goto respond;
++		}
+ 		goto stall;
+ 		break;
+ 
+@@ -448,13 +526,15 @@ const struct file_operations f_hidg_fops = {
+ 	.llseek		= noop_llseek,
+ };
+ 
+-static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
++static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct usb_ep		*ep;
+ 	struct f_hidg		*hidg = func_to_hidg(f);
+ 	int			status;
+ 	dev_t			dev;
+ 
++	pr_info("%s: creating device %p\n", __func__, hidg);
++
+ 	/* allocate instance-specific interface IDs, and patch descriptors */
+ 	status = usb_interface_id(c, f);
+ 	if (status < 0)
+@@ -518,6 +598,7 @@ static int __init hidg_bind(struct usb_configuration *c, struct usb_function *f)
+ 		goto fail;
+ 
+ 	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
++	hacky_device_list_add(hidg);
+ 
+ 	return 0;
+ 
+@@ -539,12 +620,21 @@ static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
+ {
+ 	struct f_hidg *hidg = func_to_hidg(f);
+ 
++	pr_info("%s: destroying device %p\n", __func__, hidg);
++	/* This does not cover all race conditions, only most common one */
++	mutex_lock(&hidg->lock);
++	hacky_device_list_remove(hidg);
++	mutex_unlock(&hidg->lock);
++
+ 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
+ 	cdev_del(&hidg->cdev);
+ 
+ 	/* disable/free request and end point */
+ 	usb_ep_disable(hidg->in_ep);
+-	usb_ep_dequeue(hidg->in_ep, hidg->req);
++	/* TODO: calling this function crash kernel,
++	   not calling this funct ion crash kernel inside f_hidg_write */
++	/* usb_ep_dequeue(hidg->in_ep, hidg->req); */
++
+ 	kfree(hidg->req->buf);
+ 	usb_ep_free_request(hidg->in_ep, hidg->req);
+ 
+@@ -580,7 +670,7 @@ static struct usb_gadget_strings *ct_func_strings[] = {
+ /*-------------------------------------------------------------------------*/
+ /*                             usb_configuration                           */
+ 
+-int __init hidg_bind_config(struct usb_configuration *c,
++int hidg_bind_config(struct usb_configuration *c,
+ 			    struct hidg_func_descriptor *fdesc, int index)
+ {
+ 	struct f_hidg *hidg;
+@@ -631,7 +721,7 @@ int __init hidg_bind_config(struct usb_configuration *c,
+ 	return status;
+ }
+ 
+-int __init ghid_setup(struct usb_gadget *g, int count)
++int ghid_setup(struct usb_gadget *g, int count)
+ {
+ 	int status;
+ 	dev_t dev;
+diff --git a/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
+new file mode 100644
+index 0000000..ad3527a
+--- /dev/null
++++ b/drivers/usb/gadget/f_hid.h
+@@ -0,0 +1,16 @@
++#ifndef _GADGET_F_HID_H
++#define _GADGET_F_HID_H
++
++#include <linux/hid.h>
++#include <linux/usb/composite.h>
++#include <linux/usb/gadget.h>
++#include <linux/usb/g_hid.h>
++
++int hidg_bind_config(struct usb_configuration *c,
++			    struct hidg_func_descriptor *fdesc, int index);
++
++int ghid_setup(struct usb_gadget *g, int count);
++
++void ghid_cleanup(void);
++
++#endif
+diff --git a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
+new file mode 100644
+index 0000000..1824bdd
+--- /dev/null
++++ b/drivers/usb/gadget/f_hid_android_keyboard.c
+@@ -0,0 +1,44 @@
++#include <linux/platform_device.h>
++#include <linux/usb/g_hid.h>
++
++/* hid descriptor for a keyboard */
++static struct hidg_func_descriptor ghid_device_android_keyboard = {
++	.subclass		= 1, /* Boot Interface Subclass */
++	.protocol		= 1, /* Keyboard */
++	.report_length		= 8,
++	.report_desc_length	= 63,
++	.report_desc		= {
++		0x05, 0x01,	/* USAGE_PAGE (Generic Desktop)	          */
++		0x09, 0x06,	/* USAGE (Keyboard)                       */
++		0xa1, 0x01,	/* COLLECTION (Application)               */
++		0x05, 0x07,	/*   USAGE_PAGE (Keyboard)                */
++		0x19, 0xe0,	/*   USAGE_MINIMUM (Keyboard LeftControl) */
++		0x29, 0xe7,	/*   USAGE_MAXIMUM (Keyboard Right GUI)   */
++		0x15, 0x00,	/*   LOGICAL_MINIMUM (0)                  */
++		0x25, 0x01,	/*   LOGICAL_MAXIMUM (1)                  */
++		0x75, 0x01,	/*   REPORT_SIZE (1)                      */
++		0x95, 0x08,	/*   REPORT_COUNT (8)                     */
++		0x81, 0x02,	/*   INPUT (Data,Var,Abs)                 */
++		0x95, 0x01,	/*   REPORT_COUNT (1)                     */
++		0x75, 0x08,	/*   REPORT_SIZE (8)                      */
++		0x81, 0x03,	/*   INPUT (Cnst,Var,Abs)                 */
++		0x95, 0x05,	/*   REPORT_COUNT (5)                     */
++		0x75, 0x01,	/*   REPORT_SIZE (1)                      */
++		0x05, 0x08,	/*   USAGE_PAGE (LEDs)                    */
++		0x19, 0x01,	/*   USAGE_MINIMUM (Num Lock)             */
++		0x29, 0x05,	/*   USAGE_MAXIMUM (Kana)                 */
++		0x91, 0x02,	/*   OUTPUT (Data,Var,Abs)                */
++		0x95, 0x01,	/*   REPORT_COUNT (1)                     */
++		0x75, 0x03,	/*   REPORT_SIZE (3)                      */
++		0x91, 0x03,	/*   OUTPUT (Cnst,Var,Abs)                */
++		0x95, 0x06,	/*   REPORT_COUNT (6)                     */
++		0x75, 0x08,	/*   REPORT_SIZE (8)                      */
++		0x15, 0x00,	/*   LOGICAL_MINIMUM (0)                  */
++		0x25, 0x65,	/*   LOGICAL_MAXIMUM (101)                */
++		0x05, 0x07,	/*   USAGE_PAGE (Keyboard)                */
++		0x19, 0x00,	/*   USAGE_MINIMUM (Reserved)             */
++		0x29, 0x65,	/*   USAGE_MAXIMUM (Keyboard Application) */
++		0x81, 0x00,	/*   INPUT (Data,Ary,Abs)                 */
++		0xc0		/* END_COLLECTION                         */
++	}
++};
+diff --git a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
+new file mode 100644
+index 0000000..95854c1
+--- /dev/null
++++ b/drivers/usb/gadget/f_hid_android_mouse.c
+@@ -0,0 +1,39 @@
++#include <linux/platform_device.h>
++#include <linux/usb/g_hid.h>
++
++/* hid descriptor for a mouse */
++static struct hidg_func_descriptor ghid_device_android_mouse = {
++	.subclass      		= 1, /* Boot Interface Subclass */
++	.protocol      		= 2, /* Mouse */
++	.report_length 		= 4,
++	.report_desc_length	= 52,
++	.report_desc 		= {
++		0x05, 0x01,  	/* USAGE_PAGE (Generic Desktop)           */
++		0x09, 0x02,  	/* USAGE (Mouse)                          */
++		0xa1, 0x01,  	/* COLLECTION (Application)               */
++		0x09, 0x01,  	/* USAGE (pointer)                        */
++		0xa1, 0x00,  	/* COLLECTION (Physical)                  */
++		0x05, 0x09,  	/*   USAGE_PAGE (Button)                  */
++		0x19, 0x01,  	/*   USAGE_MINIMUM (1)                    */
++		0x29, 0x05,  	/*   USAGE_MAXIMUM (5)                    */
++		0x15, 0x00,  	/*   LOGICAL_MINIMUM (1)                  */
++		0x25, 0x01,  	/*   LOGICAL_MAXIMUM (1)                  */
++		0x95, 0x05,  	/*   REPORT_COUNT (5)                     */
++		0x75, 0x01,  	/*   REPORT_SIZE (1)                      */
++		0x81, 0x02,  	/*   Input(Data,Var,Abs,BitField)         */
++		0x95, 0x01,  	/*   REPORT_COUNT (1)                     */
++		0x75, 0x03,  	/*   REPORT_SIZE (3)                      */
++		0x81, 0x01,  	/*   Input(Cnst,Ary,Abs,BitField)         */
++		0x05, 0x01,  	/*   USAGE_PAGE (Generic Desktop)         */
++		0x09, 0x30,  	/*   USAGE (x)                            */
++		0x09, 0x31,  	/*   USAGE (y)                            */
++		0x09, 0x38,  	/*   USAGE (Wheel)                        */
++		0x15, 0x81,  	/*   LOGICAL_MINIMUM (-127)               */
++		0x25, 0x7F,  	/*   LOGICAL_MAXIMUM (127)                */
++		0x75, 0x08,  	/*   REPORT_SIZE (8)                      */
++		0x95, 0x03,  	/*   REPORT_COUNT (3)                     */
++		0x81, 0x06,  	/*   INPUT (Data,Var,Rel,BitField)        */
++		0xc0,  		/* END COLLECTION                         */
++		0xc0  		/* END COLLECTION                         */
++	}
++};
