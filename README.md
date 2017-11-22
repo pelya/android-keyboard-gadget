@@ -155,7 +155,7 @@ Xiaomi Redmi Note 3
 Samsung Galaxy Tab 2 (any espresso3g based device)
 --------------------------------------------------
 
-- https://github.com/tijesef/android-keyboard-gadget/raw/master/compiled/Samsung_Galaxy_Tab_2-espresso3g_LINEAGE-13.0/boot.img
+- https://github.com/pelya/android-keyboard-gadget/blob/master/compiled/Samsung_Galaxy_Tab_2-espresso3g_LINEAGE-13.0/boot.img
 
 Other devices
 -------------
