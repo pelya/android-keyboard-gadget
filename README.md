@@ -283,9 +283,8 @@ To compile kernel, launch commands
 	make tegra3_android_defconfig
 	make -j4
 
-Use either [kernel-3.1.patch](kernel-3.1.patch), [kernel-3.4.patch](kernel-3.4.patch),
-[kernel-3.10-nexus6.patch](kernel-3.10-nexus6.patch), or [kernel-3.10-nexus9.patch](kernel-3.10-nexus9.patch),
-depending on your kernel version.
+https://github.com/pelya/android-keyboard-gadget/tree/master/patches/existing_tested - Tested patch files
+(pro) Tip: generic_kernel_version_3.xx.patch is just patches for AOSP roms and just by basic kernel versions. 3.01 is acceptable for 3.0.101. Other patch files is for devices only. The file named HTC Flounder will be acceptable ONLY FOR HTC Flounder!
 
 To compile `boot.img`, launch commands
 
