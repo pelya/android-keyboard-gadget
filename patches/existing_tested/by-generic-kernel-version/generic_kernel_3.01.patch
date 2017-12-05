@@ -72,6 +72,7 @@ index 4de9562..b26ea34 100644
  	&accessory_function,
  	&audio_source_function,
 +	&hid_function,
+  &dm_function,
  	NULL
  };
  
