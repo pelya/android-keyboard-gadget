@@ -72,6 +72,11 @@ Motorola Moto G 2014
 - http://forum.xda-developers.com/showthread.php?t=3085277
 
 
+Motorola Moto X Style (Pure) 2015
+---------------------------------
+
+- http://forum.xda-developers.com/showthread.php?t=3554226
+
 OnePlus One
 -----------
 
