@@ -112,6 +112,11 @@ Xiaomi Redmi 1S
 
 - http://forum.xda-developers.com/showthread.php?t=2998620
 
+Xiaomi Redmi 3S
+---------------
+
+- http://forum.xda-developers.com/showthread.php?t=3667804
+
 Galaxy Ace 2
 ------------
 
