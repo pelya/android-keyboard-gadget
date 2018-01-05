@@ -137,6 +137,11 @@ Asus Zenfone 2 ZE551ML
 
 - https://github.com/pelya/android-keyboard-gadget/blob/master/asus-Zenfone-2-ZE551ML/boot.img?raw=true
 
+Asus Zenfone 2 Laser (Z00L/Z00T)
+----------------------
+
+- https://forum.xda-developers.com/zenfone-2-laser/development/kernel-firekernel-t3703326
+
 Sony Xperia Z5 Premium E6853
 ----------------------------
 
