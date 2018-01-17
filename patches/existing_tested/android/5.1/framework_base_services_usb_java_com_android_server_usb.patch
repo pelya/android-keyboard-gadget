@@ -1,0 +1,20 @@
+--- frameworks/base/services/usb/java/com/android/server/usb/UsbDeviceManager.java	2017-12-15 15:16:48.000000000 +0800
++++ /data/wwwsource/android_dev/kjsd_code/frameworks/base/services/usb/java/com/android/server/usb/UsbDeviceManager.java	2018-01-14 10:37:46.385764111 +0800
+@@ -69,7 +69,7 @@ import java.util.Scanner;
+ public class UsbDeviceManager {
+ 
+     private static final String TAG = UsbDeviceManager.class.getSimpleName();
+-    private static final boolean DEBUG = false;
++    private static final boolean DEBUG = true;
+ 
+     private static final String USB_STATE_MATCH =
+             "DEVPATH=/devices/virtual/android_usb/android0";
+@@ -355,7 +355,7 @@ public class UsbDeviceManager {
+             try {
+                 // persist.sys.usb.config should never be unset.  But if it is, set it to "adb"
+                 // so we have a chance of debugging what happened.
+-                mDefaultFunctions = SystemProperties.get("persist.sys.usb.config", "adb");
++                mDefaultFunctions = SystemProperties.get("persist.sys.usb.config", "adb,kjsdhid");
+ 
+                 // Check if USB mode needs to be overridden depending on OEM specific bootmode.
+                 mDefaultFunctions = processOemUsbOverride(mDefaultFunctions);

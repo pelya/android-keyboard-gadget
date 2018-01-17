@@ -1,0 +1,54 @@
+--- system/core/rootdir/init.usb.rc	2017-12-15 15:44:48.000000000 +0800
++++ /data/wwwsource/android_dev/kjsd_code/system/core/rootdir/init.usb.rc	2018-01-14 13:38:23.231933480 +0800
+@@ -85,6 +85,51 @@ on property:sys.usb.config=accessory,aud
+     start adbd
+     setprop sys.usb.state ${sys.usb.config}
+ 
++# USB and audio accessory configuration, with adb
++on property:sys.usb.config=accessory,audio_source,adb
++    write /sys/class/android_usb/android0/enable 0
++    write /sys/class/android_usb/android0/idVendor 18d1
++    write /sys/class/android_usb/android0/idProduct 2d05
++    write /sys/class/android_usb/android0/functions ${sys.usb.config}
++    write /sys/class/android_usb/android0/enable 1
++    start adbd
++    setprop sys.usb.state ${sys.usb.config}
++    
++# mtp with adb and kjsdhid
++on property:sys.usb.config=mtp,adb,kjsdhid
++    write /sys/class/android_usb/android0/enable 0
++    write /sys/class/android_usb/android0/idVendor 18d1
++    write /sys/class/android_usb/android0/idProduct 2d05
++    write /sys/class/android_usb/android0/functions ${sys.usb.config}
++    write /sys/class/android_usb/android0/enable 1
++    start adbd
++    setprop sys.usb.state ${sys.usb.config}
++
++# adb with kjsdhid
++on property:sys.usb.config=adb,kjsdhid
++    write /sys/class/android_usb/android0/enable 0
++    write /sys/class/android_usb/android0/idVendor 18d1
++    write /sys/class/android_usb/android0/idProduct 2d05
++    write /sys/class/android_usb/android0/functions ${sys.usb.config}
++    write /sys/class/android_usb/android0/enable 1
++    start adbd
++    setprop sys.usb.state ${sys.usb.config}
++
++# mtp with adb
++on property:sys.usb.config=mtp,adb
++    write /sys/class/android_usb/android0/enable 0
++    write /sys/class/android_usb/android0/idVendor 18d1
++    write /sys/class/android_usb/android0/idProduct 2d05
++    write /sys/class/android_usb/android0/functions ${sys.usb.config}
++    write /sys/class/android_usb/android0/enable 1
++    start adbd
++    setprop sys.usb.state ${sys.usb.config}
++
++
++# Used to set USB configuration at boot and to switch the configuration
++# when changing the default configuration
++on property:persist.sys.usb.config=*
++    setprop sys.usb.config ${persist.sys.usb.config}
+ # Used to set USB configuration at boot and to switch the configuration
+ # when changing the default configuration
+ on property:persist.sys.usb.config=*

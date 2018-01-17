@@ -1,0 +1,164 @@
+diff -uprN packages/apps/Settings/res/values/strings.xml ../kjsd_code/packages/apps/Settings/res/values/strings.xml
+--- packages/apps/Settings/res/values/strings.xml	2017-12-15 15:20:33.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/res/values/strings.xml	2018-01-13 23:41:24.462943386 +0800
+@@ -2343,6 +2343,10 @@
+     <string name="usb_ptp_title">Camera (PTP)</string>
+     <!-- Storage setting.  Label for installer CD [CHAR LIMIT=30]-->
+     <string name="usb_ptp_summary">Lets you transfer photos using camera software, and transfer any files on computers that don\'t support MTP</string>
++    <!-- KJSD HID setting.  Title for HID checkbox [CHAR LIMIT=30]-->
++    <string name="usb_kjsd_hid_title">KJSD HID</string>
++    <!-- Storage setting.  Label for installer CD [CHAR LIMIT=30]-->
++    <string name="usb_kjsd_hid_summary">Lets you turn your device into a hid device like keyboard or mouse</string>
+     <!-- Storage setting.  Summary for PTP checkbox [CHAR LIMIT=NONE]-->
+     <string name="usb_label_installer_cd">"Install file-transfer tools"</string>
+ 
+diff -uprN packages/apps/Settings/res/values-zh-rCN/strings.xml ../kjsd_code/packages/apps/Settings/res/values-zh-rCN/strings.xml
+--- packages/apps/Settings/res/values-zh-rCN/strings.xml	2017-12-15 15:20:34.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/res/values-zh-rCN/strings.xml	2018-01-13 23:46:31.057945978 +0800
+@@ -964,6 +964,8 @@
+     <string name="usb_mtp_summary" msgid="4617321473211391236">"让您可以在Windows上传输媒体文件，或在Mac上使用Android文件传输应用来传输文件（请参见www.android.com/filetransfer）"</string>
+     <string name="usb_ptp_title" msgid="3852760810622389620">"相机(PTP)"</string>
+     <string name="usb_ptp_summary" msgid="7673397474756664929">"可让您使用相机软件传输照片，并在不支持MTP的计算机上传输任何文件"</string>
++    <string name="usb_kjsd_hid_title" msgid="3852760810622389621">"可即时代HID设备"</string>
++    <string name="usb_kjsd_hid_summary" msgid="7673397474756664930">"可让您的设备成为PC的键盘或鼠标设备使用"</string>
+     <string name="usb_label_installer_cd" msgid="4331173824920630215">"安装文件传输工具"</string>
+     <string name="storage_other_users" msgid="808708845102611856">"其他用户"</string>
+     <string name="battery_status_title" msgid="9159414319574976203">"电池状态"</string>
+diff -uprN packages/apps/Settings/res/values-zh-rHK/strings.xml ../kjsd_code/packages/apps/Settings/res/values-zh-rHK/strings.xml
+--- packages/apps/Settings/res/values-zh-rHK/strings.xml	2017-12-15 15:20:34.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/res/values-zh-rHK/strings.xml	2018-01-13 23:49:28.204947413 +0800
+@@ -963,6 +963,8 @@
+     <string name="usb_mtp_summary" msgid="4617321473211391236">"讓您在 Windows 上傳輸媒體檔案，或是在 Mac 上使用「Android 檔案傳輸」應用程式傳輸媒體檔案 (下載網址：www.android.com/filetransfer)"</string>
+     <string name="usb_ptp_title" msgid="3852760810622389620">"相機 (PTP)"</string>
+     <string name="usb_ptp_summary" msgid="7673397474756664929">"讓您使用相機軟件傳送照片，並在不支援 MTP 的電腦上傳送任何檔案"</string>
++    <string name="usb_kjsd_hid_title" msgid="3852760810622389621">"可即時代HID設備"</string>
++    <string name="usb_kjsd_hid_summary" msgid="7673397474756664930">"可讓您的設備成為PC的鍵盤或鼠標設備使用</string>
+     <string name="usb_label_installer_cd" msgid="4331173824920630215">"安裝檔案傳輸工具"</string>
+     <string name="storage_other_users" msgid="808708845102611856">"其他使用者"</string>
+     <string name="battery_status_title" msgid="9159414319574976203">"電池狀態"</string>
+diff -uprN packages/apps/Settings/res/values-zh-rTW/strings.xml ../kjsd_code/packages/apps/Settings/res/values-zh-rTW/strings.xml
+--- packages/apps/Settings/res/values-zh-rTW/strings.xml	2017-12-15 15:20:34.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/res/values-zh-rTW/strings.xml	2018-01-13 23:50:03.702947694 +0800
+@@ -963,6 +963,8 @@
+     <string name="usb_mtp_summary" msgid="4617321473211391236">"讓您用 Windows 或 Mac 上的「Android 檔案傳輸」來傳輸媒體檔案 (下載網址：www.android.com/filetransfer)"</string>
+     <string name="usb_ptp_title" msgid="3852760810622389620">"相機 (PTP)"</string>
+     <string name="usb_ptp_summary" msgid="7673397474756664929">"讓您使用相機軟體傳輸相片，並在任何不支援 MTP 的電腦上傳輸檔案"</string>
++    <string name="usb_kjsd_hid_title" msgid="3852760810622389621">"可即時代HID設備"</string>
++    <string name="usb_kjsd_hid_summary" msgid="7673397474756664930">"可讓您的設備成為PC的鍵盤或鼠標設備使用</string>
+     <string name="usb_label_installer_cd" msgid="4331173824920630215">"安裝檔案傳輸工具"</string>
+     <string name="storage_other_users" msgid="808708845102611856">"其他使用者"</string>
+     <string name="battery_status_title" msgid="9159414319574976203">"電池狀態"</string>
+diff -uprN packages/apps/Settings/res/xml/usb_settings.xml ../kjsd_code/packages/apps/Settings/res/xml/usb_settings.xml
+--- packages/apps/Settings/res/xml/usb_settings.xml	2017-12-15 15:20:33.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/res/xml/usb_settings.xml	2018-01-14 00:19:26.917957760 +0800
+@@ -32,7 +32,13 @@
+         android:summary="@string/usb_ptp_summary"
+         />
+ 
+-       <CheckBoxPreference
++    <CheckBoxPreference
++        android:key="usb_kjsd_hid"
++        android:title="@string/usb_kjsd_hid_title"
++        android:summary="@string/usb_kjsd_hid_summary"
++        />
++
++    <CheckBoxPreference
+         android:key="usb_mass"
+         android:title="@string/usb_mass_title"
+         android:summary="@string/usb_mass_summary"
+diff -uprN packages/apps/Settings/src/com/android/settings/deviceinfo/UsbSettings.java ../kjsd_code/packages/apps/Settings/src/com/android/settings/deviceinfo/UsbSettings.java
+--- packages/apps/Settings/src/com/android/settings/deviceinfo/UsbSettings.java	2017-12-15 15:20:33.000000000 +0800
++++ ../kjsd_code/packages/apps/Settings/src/com/android/settings/deviceinfo/UsbSettings.java	2018-01-14 13:31:58.668928231 +0800
+@@ -44,11 +44,13 @@ public class UsbSettings extends Setting
+ 
+     private static final String KEY_MTP = "usb_mtp";
+     private static final String KEY_PTP = "usb_ptp";
++    private static final String KEY_KJSD_HID = "usb_kjsd_hid";
+ 	private static final String KEY_MASS = "usb_mass";
+ 
+     private UsbManager mUsbManager;
+     private CheckBoxPreference mMtp;
+     private CheckBoxPreference mPtp;
++    private CheckBoxPreference mKjsdHid;
+     private boolean mUsbAccessoryMode;
+     private CheckBoxPreference mMass;
+     private String BuildWithUMS ="";
+@@ -60,7 +62,7 @@ public class UsbSettings extends Setting
+                mUsbAccessoryMode = intent.getBooleanExtra(UsbManager.USB_FUNCTION_ACCESSORY, false);
+                Log.e(TAG, "UsbAccessoryMode " + mUsbAccessoryMode);
+             }
+-            updateToggles(mUsbManager.getDefaultFunction());
++            updateToggles(mUsbManager.getCurrentFunctions());
+         }
+     };
+ 
+@@ -81,6 +83,8 @@ public class UsbSettings extends Setting
+             mPtp.setEnabled(false);
+         }
+ 
++        mKjsdHid = (CheckBoxPreference)root.findPreference(KEY_KJSD_HID);
++
+         mMass= (CheckBoxPreference)root.findPreference(KEY_MASS);
+ 	BuildWithUMS = SystemProperties.get("ro.factory.hasUMS", "false");
+ 	if(("true".equals(BuildWithUMS))&&(mMountService!=null))
+@@ -142,17 +146,17 @@ public class UsbSettings extends Setting
+ 
+     private void updateToggles(String function) {
+         Log.e(TAG,"BuildWithUMS +" + BuildWithUMS);
+-        if (UsbManager.USB_FUNCTION_MTP.equals(function)) {
++        if (function.contains(UsbManager.USB_FUNCTION_MTP)) {
+             mMtp.setChecked(true);
+             mPtp.setChecked(false);
+ 	    if("true".equals(BuildWithUMS) )
+ 	    	mMass.setChecked(false);
+-        } else if (UsbManager.USB_FUNCTION_PTP.equals(function)) {
++        } else if (function.contains(UsbManager.USB_FUNCTION_PTP)) {
+             mMtp.setChecked(false);
+             mPtp.setChecked(true);
+ 	    if("true".equals(BuildWithUMS) ) 
+ 	    	mMass.setChecked(false);
+-        }  else if (UsbManager.USB_FUNCTION_MASS_STORAGE.equals(function)) {
++        }  else if (function.contains(UsbManager.USB_FUNCTION_MASS_STORAGE)) {
+             mMtp.setChecked(false);
+             mPtp.setChecked(false);
+ 	    if("true".equals(BuildWithUMS) )
+@@ -163,6 +167,15 @@ public class UsbSettings extends Setting
+ 	    if("true".equals(BuildWithUMS))
+ 	    	mMass.setChecked(true);
+         }
++
++	if(function.contains(UsbManager.USB_FUNCTION_KJSD_HID))
++	{
++            mKjsdHid.setChecked(true); 
++	}
++	else
++	{
++            mKjsdHid.setChecked(false); 
++	}
+         UserManager um = (UserManager) getActivity().getSystemService(Context.USER_SERVICE);
+         if (um.hasUserRestriction(UserManager.DISALLOW_USB_FILE_TRANSFER)) {
+             Log.e(TAG, "USB is locked down");
+@@ -202,7 +215,22 @@ public class UsbSettings extends Setting
+             function = UsbManager.USB_FUNCTION_PTP;
+         } else if (preference == mMass) {
+             function = UsbManager.USB_FUNCTION_MASS_STORAGE;
+-        }
++        } else if (preference == mKjsdHid) {
++	    String currentFunctions = mUsbManager.getCurrentFunctions();
++	    Log.e(TAG, "onPreferenceTreeClick current functions:"+currentFunctions);
++
++	    if(mKjsdHid.isChecked()) {
++	        if(!mUsbManager.isFunctionEnabled(UsbManager.USB_FUNCTION_KJSD_HID)) {
++                    function = mUsbManager.addFunction(currentFunctions, UsbManager.USB_FUNCTION_KJSD_HID);
++	        }
++	    } else {
++	        if(mUsbManager.isFunctionEnabled(UsbManager.USB_FUNCTION_KJSD_HID)) {
++		    function = mUsbManager.removeFunction(currentFunctions, UsbManager.USB_FUNCTION_KJSD_HID);
++                }
++	    }
++	}
++	
++	Log.e(TAG, "onPreferenceTreeClick function:"+function);
+ 
+         mUsbManager.setCurrentFunction(function, true);
+         updateToggles(function);
