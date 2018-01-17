@@ -1,0 +1,106 @@
+diff -uprN frameworks/base/core/java/android/hardware/usb/UsbManager.java /home/work/kjsd_code/frameworks/base/core/java/android/hardware/usb/UsbManager.java
+--- frameworks/base/core/java/android/hardware/usb/UsbManager.java	2018-01-14 10:51:13.447770002 +0800
++++ /home/work/kjsd_code/frameworks/base/core/java/android/hardware/usb/UsbManager.java	2017-12-15 15:17:51.000000000 +0800
+@@ -24,8 +24,6 @@ import android.os.ParcelFileDescriptor;
+ import android.os.RemoteException;
+ import android.os.SystemProperties;
+ import android.util.Log;
+-import java.io.PrintWriter;
+-import java.util.Arrays;
+ 
+ import java.util.HashMap;
+ 
+@@ -198,13 +196,6 @@ public class UsbManager {
+     public static final String USB_FUNCTION_ACCESSORY = "accessory";
+ 
+     /**
+-     * Name of the HID USB function.
+-     * Used in extras for the {@link #ACTION_USB_STATE} broadcast
+-     *
+-     * {@hide}
+-     */
+-    public static final String USB_FUNCTION_KJSD_HID = "kjsdhid";
+-    /**
+      * Name of extra for {@link #ACTION_USB_DEVICE_ATTACHED} and
+      * {@link #ACTION_USB_DEVICE_DETACHED} broadcasts
+      * containing the UsbDevice object for the device.
+@@ -449,79 +440,6 @@ public class UsbManager {
+     }
+ 
+     /**
+-     * Returns the current USB functions.
+-     *
+-     * @return name of current functions seperated by comma.
+-     *
+-     * {@hide}
+-     */
+-    public String getCurrentFunctions() {
+-        String functions = SystemProperties.get("sys.usb.config", "none");
+-	return functions;
+-    }
+-
+-    /**
+-     * Add a USB function.
+-     *
+-     * @return name of current functions seperated by comma.
+-     *
+-     * {@hide}
+-     */
+-    public String addFunction(String functions, String function) {
+-         if ("none".equals(functions)) {
+-             return function;
+-         }
+-        if (!containsFunction(functions, function)) {
+-            if (functions.length() > 0) {
+-                functions += ",";
+-            }
+-            functions += function;
+-        }
+-        return functions;
+-    }
+-
+-    /**
+-     * Remove a usb function.
+-     *
+-     * @return name of current functions seperated by comma.
+-     *
+-     * {@hide}
+-     */
+-    public String removeFunction(String functions, String function) {
+-        String[] split = functions.split(",");
+-        for (int i = 0; i < split.length; i++) {
+-            if (function.equals(split[i])) {
+-                split[i] = null;
+-            }
+-        }
+-        if (split.length == 1 && split[0] == null) {
+-            return "none";
+-        }
+-        StringBuilder builder = new StringBuilder();
+-         for (int i = 0; i < split.length; i++) {
+-            String s = split[i];
+-            if (s != null) {
+-                if (builder.length() > 0) {
+-                    builder.append(",");
+-                }
+-                builder.append(s);
+-            }
+-        }
+-        return builder.toString();
+-    }
+-
+-    /**
+-     * Check function is contained in it.
+-     *
+-     * @return name of current functions seperated by comma.
+-     *
+-     * {@hide}
+-     */
+-    public boolean containsFunction(String functions, String function) {
+-        return Arrays.asList(functions.split(",")).contains(function);
+-    }
+-
+-    /**
+      * Sets the current USB function.
+      * If function is null, then the current function is set to the default function.
+      *
