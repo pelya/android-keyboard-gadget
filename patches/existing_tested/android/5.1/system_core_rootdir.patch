@@ -1,0 +1,72 @@
+diff -uprN system/core/rootdir/init.usb.rc /home/work/kjsd_code/system/core/rootdir/init.usb.rc
+--- system/core/rootdir/init.usb.rc	2018-01-14 13:38:23.231933480 +0800
++++ /home/work/kjsd_code/system/core/rootdir/init.usb.rc	2017-12-15 15:44:48.000000000 +0800
+@@ -85,51 +85,6 @@ on property:sys.usb.config=accessory,aud
+     start adbd
+     setprop sys.usb.state ${sys.usb.config}
+ 
+-# USB and audio accessory configuration, with adb
+-on property:sys.usb.config=accessory,audio_source,adb
+-    write /sys/class/android_usb/android0/enable 0
+-    write /sys/class/android_usb/android0/idVendor 18d1
+-    write /sys/class/android_usb/android0/idProduct 2d05
+-    write /sys/class/android_usb/android0/functions ${sys.usb.config}
+-    write /sys/class/android_usb/android0/enable 1
+-    start adbd
+-    setprop sys.usb.state ${sys.usb.config}
+-    
+-# mtp with adb and kjsdhid
+-on property:sys.usb.config=mtp,adb,kjsdhid
+-    write /sys/class/android_usb/android0/enable 0
+-    write /sys/class/android_usb/android0/idVendor 18d1
+-    write /sys/class/android_usb/android0/idProduct 2d05
+-    write /sys/class/android_usb/android0/functions ${sys.usb.config}
+-    write /sys/class/android_usb/android0/enable 1
+-    start adbd
+-    setprop sys.usb.state ${sys.usb.config}
+-
+-# adb with kjsdhid
+-on property:sys.usb.config=adb,kjsdhid
+-    write /sys/class/android_usb/android0/enable 0
+-    write /sys/class/android_usb/android0/idVendor 18d1
+-    write /sys/class/android_usb/android0/idProduct 2d05
+-    write /sys/class/android_usb/android0/functions ${sys.usb.config}
+-    write /sys/class/android_usb/android0/enable 1
+-    start adbd
+-    setprop sys.usb.state ${sys.usb.config}
+-
+-# mtp with adb
+-on property:sys.usb.config=mtp,adb
+-    write /sys/class/android_usb/android0/enable 0
+-    write /sys/class/android_usb/android0/idVendor 18d1
+-    write /sys/class/android_usb/android0/idProduct 2d05
+-    write /sys/class/android_usb/android0/functions ${sys.usb.config}
+-    write /sys/class/android_usb/android0/enable 1
+-    start adbd
+-    setprop sys.usb.state ${sys.usb.config}
+-
+-
+-# Used to set USB configuration at boot and to switch the configuration
+-# when changing the default configuration
+-on property:persist.sys.usb.config=*
+-    setprop sys.usb.config ${persist.sys.usb.config}
+ # Used to set USB configuration at boot and to switch the configuration
+ # when changing the default configuration
+ on property:persist.sys.usb.config=*
+diff -uprN system/core/rootdir/ueventd.rc /home/work/kjsd_code/system/core/rootdir/ueventd.rc
+--- system/core/rootdir/ueventd.rc	2018-01-13 19:32:18.111953432 +0800
++++ /home/work/kjsd_code/system/core/rootdir/ueventd.rc	2017-12-15 15:44:48.000000000 +0800
+@@ -21,12 +21,7 @@ subsystem adf
+ 
+ # Anyone can read the logs, but if they're not in the "logs"
+ # group, then they'll only see log entries for their UID.
+-/dev/log
+-
+-/dev/hidg0                 0666   shell     shell
+-/dev/hidg1                 0666   shell     shell 
+-
+-/*                0666   root       log
++/dev/log/*                0666   root       log
+ 
+ # the msm hw3d client device node is world writable/readable.
+ /dev/msm_hw3dc            0666   root       root

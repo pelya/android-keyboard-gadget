@@ -1,0 +1,12 @@
+diff -uprN device/rockchip/common/device.mk /home/work/kjsd_code/device/rockchip/common/device.mk
+--- device/rockchip/common/device.mk	2018-01-13 22:25:01.557936411 +0800
++++ /home/work/kjsd_code/device/rockchip/common/device.mk	2017-12-15 15:39:59.000000000 +0800
+@@ -316,7 +316,7 @@ PRODUCT_COPY_FILES += \
+ else
+ PRODUCT_PROPERTY_OVERRIDES +=       \
+     ro.factory.hasUMS=false         \
+-    persist.sys.usb.config=mtp,adb,kjsdhid  \
++    persist.sys.usb.config=mtp,adb  \
+     testing.mediascanner.skiplist = /mnt/shell/emulated/Android/
+ 
+ PRODUCT_COPY_FILES += \
