@@ -1,5 +1,5 @@
 From 4201852b3a2d914c8f8f3d039d5c36f6c978237a Mon Sep 17 00:00:00 2001
-From: "Laster K. (lazerl0rd)" <officiallazerl0rd@gmail.com>
+From: Diab Neiroukh <officiallazerl0rd@gmail.com>
 Date: Fri, 26 Jul 2019 16:34:24 +0200
 Subject: [PATCH] usb: gadget: add HID support for keyboard and mouse
 
@@ -7,7 +7,7 @@ Taken from the Android Gadget driver in older kernels, and adjusted to
 fit the current Linux HID driver.
 
 Suggested-by: simonpunk <simonpunk2016@gmail.com>
-Signed-off-by: Laster K. (lazerl0rd) <officiallazerl0rd@gmail.com>
+Signed-off-by: Diab Neiroukh <officiallazerl0rd@gmail.com>
 ---
  drivers/usb/gadget/function/f_hid.c           | 154 +++++++++++++++++-
  drivers/usb/gadget/function/f_hid.h           |  16 ++
