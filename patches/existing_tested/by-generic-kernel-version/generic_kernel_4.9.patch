@@ -168,7 +168,7 @@ index 8e83649f77ce1..393d36b6e265c 100644
  	if (IS_ERR(device)) {
  		status = PTR_ERR(device);
  		goto del;
-@@ -974,6 +1048,21 @@ static struct usb_function_instance *hidg_alloc_inst(void)
+@@ -974,6 +1048,23 @@ static struct usb_function_instance *hidg_alloc_inst(void)
  		if (idr_is_empty(&hidg_ida.idr))
  			ghid_cleanup();
  		goto unlock;
