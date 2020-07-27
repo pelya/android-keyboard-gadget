@@ -1,5 +1,7 @@
 Convert your Android device into USB keyboard/mouse, control your PC from your Android device remotely, including BIOS/bootloader.
 
+For newer Kernel versions (>= 3.19) the patch is not anymore required and can be replaced by ConfigFS ([USB Gadget Tool](https://github.com/tejado/android-usb-gadget)).
+
 #### Apps & tools using android-keyboard-gadget:
 * [USB Keyboard](https://play.google.com/store/apps/details?id=remote.hid.keyboard.client)
 * hid-gadget-test
