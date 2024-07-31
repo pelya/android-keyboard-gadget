@@ -374,6 +374,8 @@ You can open these two files, using open() system call,
 and write raw keyboard/mouse events there, using write() system call,
 which will be sent through USB cable to your PC.
 
+A short description of the events format is provided below. For a more comprehensive overview see the [OS Dev Wiki](https://wiki.osdev.org/USB_Human_Interface_Devices#USB_keyboard).
+
 Keyboard events
 ---------------
 Keyboard events are 8 bytes long:
